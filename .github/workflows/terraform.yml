@@ -34,6 +34,11 @@ jobs:
       TF_STATE_LOCK_TABLE: ${{ vars.TF_STATE_LOCK_TABLE }}
       TF_STATE_REGION: ${{ vars.TF_STATE_REGION }}
 
+      # Non-interactive defaults for infra/terraform/github-actions-oidc (prevents apply from prompting).
+      TF_VAR_github_owner: ${{ github.repository_owner }}
+      TF_VAR_github_repo: ${{ github.event.repository.name }}
+      TF_VAR_github_branch: main
+
     steps:
       - uses: actions/checkout@v4
 

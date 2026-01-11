@@ -22,7 +22,9 @@ resource "aws_iam_openid_connect_provider" "github" {
 }
 
 locals {
-  oidc_provider_arn = var.existing_oidc_provider_arn != null ? var.existing_oidc_provider_arn : aws_iam_openid_connect_provider.github[0].arn
+  oidc_provider_arn = var.existing_oidc_provider_arn != null ? (
+    startswith(var.existing_oidc_provider_arn, "arn:") ? var.existing_oidc_provider_arn : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${var.existing_oidc_provider_arn}"
+  ) : aws_iam_openid_connect_provider.github[0].arn
 
   # For AssumeRoleWithWebIdentity, the federated principal must reference the OIDC provider.
   assume_role_policy = jsonencode({

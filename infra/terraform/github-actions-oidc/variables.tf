@@ -51,7 +51,7 @@ variable "tags" {
 
 variable "existing_oidc_provider_arn" {
   type        = string
-  description = "If set, reuse an existing GitHub Actions OIDC provider instead of creating one."
+  description = "If set, reuse an existing GitHub Actions OIDC provider instead of creating one. Accepts either the provider ARN or the provider host (e.g. token.actions.githubusercontent.com)."
   default     = null
 }
 
