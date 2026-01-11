@@ -9,8 +9,8 @@ locals {
 
   repo_sub = "repo:${var.github_owner}/${var.github_repo}:ref:refs/heads/${var.github_branch}"
 
-  bucket_arn = "arn:aws:s3:::${var.s3_bucket_name}"
-  dist_arn   = "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/${var.cloudfront_distribution_id}"
+  bucket_arn = var.s3_bucket_name == null ? null : "arn:aws:s3:::${var.s3_bucket_name}"
+  dist_arn   = var.cloudfront_distribution_id == null ? null : "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/${var.cloudfront_distribution_id}"
 }
 
 resource "aws_iam_openid_connect_provider" "github" {
@@ -44,12 +44,15 @@ data "aws_iam_policy_document" "assume_role" {
 }
 
 resource "aws_iam_role" "deploy" {
+  count              = var.create_deploy_role ? 1 : 0
   name               = "${var.project}-github-actions-deploy"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
   tags               = local.tags
 }
 
 data "aws_iam_policy_document" "deploy" {
+  count = var.create_deploy_role ? 1 : 0
+
   statement {
     sid = "S3List"
     actions = [
@@ -85,14 +88,16 @@ data "aws_iam_policy_document" "deploy" {
 }
 
 resource "aws_iam_policy" "deploy" {
+  count  = var.create_deploy_role ? 1 : 0
   name   = "${var.project}-github-actions-deploy"
-  policy = data.aws_iam_policy_document.deploy.json
+  policy = data.aws_iam_policy_document.deploy[0].json
   tags   = local.tags
 }
 
 resource "aws_iam_role_policy_attachment" "deploy" {
-  role       = aws_iam_role.deploy.name
-  policy_arn = aws_iam_policy.deploy.arn
+  count      = var.create_deploy_role ? 1 : 0
+  role       = aws_iam_role.deploy[0].name
+  policy_arn = aws_iam_policy.deploy[0].arn
 }
 
 resource "aws_iam_role" "terraform" {
@@ -100,6 +105,18 @@ resource "aws_iam_role" "terraform" {
   name               = "${var.project}-github-actions-terraform"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
   tags               = local.tags
+}
+
+# Enforce required vars when creating deploy role
+resource "terraform_data" "validate" {
+  input = true
+
+  lifecycle {
+    precondition {
+      condition     = !var.create_deploy_role || (var.s3_bucket_name != null && var.cloudfront_distribution_id != null)
+      error_message = "When create_deploy_role=true you must set s3_bucket_name and cloudfront_distribution_id."
+    }
+  }
 }
 
 resource "aws_iam_role_policy_attachment" "terraform" {

@@ -48,11 +48,15 @@ jobs:
       - name: Terraform init
         working-directory: ${{ inputs.stack }}
         run: |
-          terraform init \
-            -backend-config="bucket=${TF_STATE_BUCKET}" \
-            -backend-config="key=${{ inputs.stack }}/terraform.tfstate" \
-            -backend-config="region=${TF_STATE_REGION}" \
-            -backend-config="dynamodb_table=${TF_STATE_LOCK_TABLE}"
+          args=(
+            -backend-config="bucket=${TF_STATE_BUCKET}"
+            -backend-config="key=bstri/${{ inputs.stack }}/terraform.tfstate"
+            -backend-config="region=${TF_STATE_REGION}"
+          )
+          if [ -n "${TF_STATE_LOCK_TABLE}" ]; then
+            args+=( -backend-config="dynamodb_table=${TF_STATE_LOCK_TABLE}" )
+          fi
+          terraform init "${args[@]}"
 
       - name: Terraform apply
         working-directory: ${{ inputs.stack }}

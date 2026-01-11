@@ -26,14 +26,22 @@ variable "github_branch" {
   default     = "main"
 }
 
+variable "create_deploy_role" {
+  type        = bool
+  description = "Create the deploy role used by the site deploy workflow (needs bucket + distribution)."
+  default     = false
+}
+
 variable "s3_bucket_name" {
   type        = string
-  description = "S3 bucket name (Terraform static-site output bucket_name)"
+  description = "S3 bucket name (Terraform static-site output bucket_name). Required when create_deploy_role=true."
+  default     = null
 }
 
 variable "cloudfront_distribution_id" {
   type        = string
-  description = "CloudFront distribution id (Terraform static-site output cloudfront_distribution_id)"
+  description = "CloudFront distribution id (Terraform static-site output cloudfront_distribution_id). Required when create_deploy_role=true."
+  default     = null
 }
 
 variable "tags" {
