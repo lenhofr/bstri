@@ -14,10 +14,15 @@ locals {
 }
 
 resource "aws_iam_openid_connect_provider" "github" {
+  count           = var.existing_oidc_provider_arn == null ? 1 : 0
   url             = "https://token.actions.githubusercontent.com"
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = [data.tls_certificate.github_actions.certificates[0].sha1_fingerprint]
   tags            = local.tags
+}
+
+locals {
+  oidc_provider_arn = var.existing_oidc_provider_arn != null ? var.existing_oidc_provider_arn : aws_iam_openid_connect_provider.github[0].arn
 }
 
 data "aws_iam_policy_document" "assume_role" {
@@ -26,7 +31,7 @@ data "aws_iam_policy_document" "assume_role" {
 
     principals {
       type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github.arn]
+      identifiers = [local.oidc_provider_arn]
     }
 
     condition {

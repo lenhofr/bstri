@@ -49,6 +49,12 @@ variable "tags" {
   default = {}
 }
 
+variable "existing_oidc_provider_arn" {
+  type        = string
+  description = "If set, reuse an existing GitHub Actions OIDC provider instead of creating one."
+  default     = null
+}
+
 variable "create_terraform_role" {
   type        = bool
   description = "Create a separate role for Terraform apply from GitHub Actions"
