@@ -4,6 +4,12 @@ variable "project_name" {
   default     = "bstri"
 }
 
+variable "site_bucket_name" {
+  type        = string
+  description = "If set, use/import an existing site bucket name instead of creating a new one."
+  default     = null
+}
+
 variable "aws_region" {
   type        = string
   description = "Region for regional resources (S3, etc.)"

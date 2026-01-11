@@ -9,8 +9,21 @@ locals {
   oidc_provider_arn = startswith(var.existing_oidc_provider_arn, "arn:") ? var.existing_oidc_provider_arn : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/${var.existing_oidc_provider_arn}"
 }
 
+resource "random_id" "bucket_suffix" {
+  byte_length = 4
+
+  keepers = {
+    project = var.project_name
+    region  = var.aws_region
+  }
+}
+
+locals {
+  site_bucket_name = var.site_bucket_name != null ? var.site_bucket_name : lower("${local.name}-site-${random_id.bucket_suffix.hex}")
+}
+
 resource "aws_s3_bucket" "site" {
-  bucket_prefix = "${local.name}-site-"
+  bucket        = local.site_bucket_name
   force_destroy = false
   tags          = local.tags
 }
@@ -59,7 +72,8 @@ resource "aws_cloudfront_distribution" "cdn" {
   default_root_object = "index.html"
 
   origin {
-    domain_name              = aws_s3_bucket.site.bucket_regional_domain_name
+    # Keep this stable across regions and match common CloudFront console defaults.
+    domain_name              = "${aws_s3_bucket.site.bucket}.s3.${var.aws_region}.amazonaws.com"
     origin_id                = "s3-site"
     origin_access_control_id = aws_cloudfront_origin_access_control.oac.id
   }
