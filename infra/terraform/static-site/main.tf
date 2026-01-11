@@ -83,7 +83,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
   viewer_certificate {
     cloudfront_default_certificate = var.custom_domain_name == null
-    acm_certificate_arn            = var.custom_domain_name == null ? null : aws_acm_certificate.cert[0].arn
+    acm_certificate_arn            = var.custom_domain_name == null ? null : aws_acm_certificate_validation.cert[0].certificate_arn
     ssl_support_method             = var.custom_domain_name == null ? null : "sni-only"
     minimum_protocol_version       = "TLSv1.2_2021"
   }
@@ -99,7 +99,55 @@ resource "aws_acm_certificate" "cert" {
   domain_name       = var.custom_domain_name
   validation_method = "DNS"
   tags              = local.tags
+
+  lifecycle {
+    precondition {
+      condition     = var.custom_domain_name == null || var.route53_zone_id != null
+      error_message = "route53_zone_id must be set when using custom_domain_name (needed for ACM DNS validation)."
+    }
+  }
 }
 
-# DNS validation records intentionally omitted for now to avoid touching Route53.
-# When ready, we can add Route53 records for validation and (optionally) cutover.
+resource "aws_route53_record" "cert_validation" {
+  count   = var.custom_domain_name == null ? 0 : length(aws_acm_certificate.cert[0].domain_validation_options)
+  zone_id = var.route53_zone_id
+
+  name    = aws_acm_certificate.cert[0].domain_validation_options[count.index].resource_record_name
+  type    = aws_acm_certificate.cert[0].domain_validation_options[count.index].resource_record_type
+  records = [aws_acm_certificate.cert[0].domain_validation_options[count.index].resource_record_value]
+  ttl     = 60
+}
+
+resource "aws_acm_certificate_validation" "cert" {
+  count           = var.custom_domain_name == null ? 0 : 1
+  provider        = aws.use1
+  certificate_arn = aws_acm_certificate.cert[0].arn
+
+  validation_record_fqdns = aws_route53_record.cert_validation[*].fqdn
+}
+
+resource "aws_route53_record" "alias_a" {
+  count   = var.custom_domain_name != null && var.create_route53_record ? 1 : 0
+  zone_id = var.route53_zone_id
+  name    = var.custom_domain_name
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.cdn.domain_name
+    zone_id                = aws_cloudfront_distribution.cdn.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+resource "aws_route53_record" "alias_aaaa" {
+  count   = var.custom_domain_name != null && var.create_route53_record ? 1 : 0
+  zone_id = var.route53_zone_id
+  name    = var.custom_domain_name
+  type    = "AAAA"
+
+  alias {
+    name                   = aws_cloudfront_distribution.cdn.domain_name
+    zone_id                = aws_cloudfront_distribution.cdn.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
