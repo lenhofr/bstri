@@ -9,8 +9,8 @@ We deploy the **static Next.js build** (`web/out`) to S3 and then invalidate Clo
 
 ### Repo variables
 - `AWS_REGION` — region where the S3 bucket exists (e.g. `us-west-2`)
-- `S3_BUCKET` — bucket name created by Terraform output `bucket_name`
-- `CLOUDFRONT_DISTRIBUTION_ID` — CloudFront distribution id
+- `S3_BUCKET` — bucket name from Terraform output `bucket_name`
+- `CLOUDFRONT_DISTRIBUTION_ID` — from Terraform output `cloudfront_distribution_id`
 
 ## IAM permissions (minimum)
 The role assumed by GitHub Actions needs permissions similar to:
