@@ -20,4 +20,5 @@ The role assumed by GitHub Actions needs permissions similar to:
 
 ## Notes
 - This workflow does **not** run Terraform; infra is applied separately.
+- Preferred Terraform stack is now `infra/terraform/app` (single-state jf-com style). Legacy stacks remain for now during migration.
 - Apex cutover for `barsportstri.com` should be done only when ready.
