@@ -6,7 +6,6 @@ on:
     paths:
       - 'web/**'
       - 'infra/terraform/app/**'
-      - 'infra/terraform/static-site/**'
       - 'docs/deploy.md'
       - '.github/workflows/deploy.yml'
   workflow_dispatch:
@@ -24,9 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NEXT_TELEMETRY_DISABLED: '1'
-      AWS_REGION: ${{ vars.AWS_REGION }}
-      S3_BUCKET: ${{ vars.S3_BUCKET }}
-      CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+      AWS_REGION: us-east-1
 
     steps:
       - uses: actions/checkout@v4
@@ -34,6 +31,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - uses: hashicorp/setup-terraform@v3
 
       - name: Install
         working-directory: web
@@ -43,7 +42,23 @@ jobs:
         working-directory: web
         run: npm run build
 
-      - name: Configure AWS credentials (OIDC)
+      - name: Configure AWS credentials (OIDC) for Terraform output
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_TERRAFORM_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform init (read outputs)
+        working-directory: infra/terraform/app
+        run: terraform init
+
+      - name: Read infra outputs
+        working-directory: infra/terraform/app
+        run: |
+          echo "S3_BUCKET=$(terraform output -raw bucket_name)" >> "$GITHUB_ENV"
+          echo "CLOUDFRONT_DISTRIBUTION_ID=$(terraform output -raw cloudfront_distribution_id)" >> "$GITHUB_ENV"
+
+      - name: Configure AWS credentials (OIDC) for deploy
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}

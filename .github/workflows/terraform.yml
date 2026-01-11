@@ -1,20 +1,12 @@
 name: Terraform (apply)
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'infra/terraform/app/**'
+      - '.github/workflows/terraform.yml'
   workflow_dispatch:
-    inputs:
-      stack:
-        description: 'Terraform stack directory'
-        required: true
-        type: choice
-        options:
-          - infra/terraform/app
-          - infra/terraform/static-site
-          - infra/terraform/github-actions-oidc
-      confirm:
-        description: 'Type APPLY to confirm'
-        required: true
-        default: 'NO'
 
 permissions:
   contents: read
@@ -27,21 +19,6 @@ concurrency:
 jobs:
   apply:
     runs-on: ubuntu-latest
-    if: ${{ inputs.confirm == 'APPLY' }}
-
-    env:
-      AWS_REGION: ${{ vars.AWS_REGION }}
-      TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
-      TF_STATE_LOCK_TABLE: ${{ vars.TF_STATE_LOCK_TABLE }}
-      TF_STATE_REGION: ${{ vars.TF_STATE_REGION }}
-
-      # Non-interactive defaults for infra/terraform/github-actions-oidc (prevents apply from prompting).
-      TF_VAR_github_owner: ${{ github.repository_owner }}
-      TF_VAR_github_repo: ${{ github.event.repository.name }}
-      TF_VAR_github_branch: main
-
-      # This AWS account already has the GitHub OIDC provider; reuse it instead of trying to create a duplicate.
-      TF_VAR_existing_oidc_provider_arn: ${{ vars.EXISTING_OIDC_PROVIDER_ARN || 'token.actions.githubusercontent.com' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -50,36 +27,14 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_TERRAFORM_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: us-east-1
 
       - uses: hashicorp/setup-terraform@v3
 
       - name: Terraform init
-        working-directory: ${{ inputs.stack }}
-        run: |
-          # infra/terraform/app has its backend config embedded (jf-com style).
-          if [ "${{ inputs.stack }}" = "infra/terraform/app" ]; then
-            terraform init
-            exit 0
-          fi
-
-          # Keep state keys stable for legacy stacks.
-          if [ "${{ inputs.stack }}" = "infra/terraform/github-actions-oidc" ]; then
-            tfkey="bstri/infra/terraform/github-actions-oidc.tfstate"
-          else
-            tfkey="bstri/${{ inputs.stack }}/terraform.tfstate"
-          fi
-
-          args=(
-            -backend-config="bucket=${TF_STATE_BUCKET}"
-            -backend-config="key=${tfkey}"
-            -backend-config="region=${TF_STATE_REGION}"
-          )
-          if [ -n "${TF_STATE_LOCK_TABLE}" ]; then
-            args+=( -backend-config="dynamodb_table=${TF_STATE_LOCK_TABLE}" )
-          fi
-          terraform init "${args[@]}"
+        working-directory: infra/terraform/app
+        run: terraform init
 
       - name: Terraform apply
-        working-directory: ${{ inputs.stack }}
+        working-directory: infra/terraform/app
         run: terraform apply -auto-approve
