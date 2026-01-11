@@ -40,3 +40,15 @@ variable "tags" {
   type    = map(string)
   default = {}
 }
+
+variable "create_terraform_role" {
+  type        = bool
+  description = "Create a separate role for Terraform apply from GitHub Actions"
+  default     = true
+}
+
+variable "terraform_role_policy_arn" {
+  type        = string
+  description = "Policy to attach to the Terraform role. For dev, AdministratorAccess is simplest; tighten later."
+  default     = "arn:aws:iam::aws:policy/AdministratorAccess"
+}

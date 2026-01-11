@@ -94,3 +94,16 @@ resource "aws_iam_role_policy_attachment" "deploy" {
   role       = aws_iam_role.deploy.name
   policy_arn = aws_iam_policy.deploy.arn
 }
+
+resource "aws_iam_role" "terraform" {
+  count              = var.create_terraform_role ? 1 : 0
+  name               = "${var.project}-github-actions-terraform"
+  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+  tags               = local.tags
+}
+
+resource "aws_iam_role_policy_attachment" "terraform" {
+  count      = var.create_terraform_role ? 1 : 0
+  role       = aws_iam_role.terraform[0].name
+  policy_arn = var.terraform_role_policy_arn
+}
