@@ -8,6 +8,7 @@ on:
         required: true
         type: choice
         options:
+          - infra/terraform/app
           - infra/terraform/static-site
           - infra/terraform/github-actions-oidc
       confirm:
@@ -56,7 +57,13 @@ jobs:
       - name: Terraform init
         working-directory: ${{ inputs.stack }}
         run: |
-          # Keep state keys stable (matches docs/infra-status.md + infra/terraform/github-actions-oidc/README.md)
+          # infra/terraform/app has its backend config embedded (jf-com style).
+          if [ "${{ inputs.stack }}" = "infra/terraform/app" ]; then
+            terraform init
+            exit 0
+          fi
+
+          # Keep state keys stable for legacy stacks.
           if [ "${{ inputs.stack }}" = "infra/terraform/github-actions-oidc" ]; then
             tfkey="bstri/infra/terraform/github-actions-oidc.tfstate"
           else

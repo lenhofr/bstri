@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'web/**'
+      - 'infra/terraform/app/**'
       - 'infra/terraform/static-site/**'
       - 'docs/deploy.md'
       - '.github/workflows/deploy.yml'
