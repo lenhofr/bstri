@@ -5,3 +5,13 @@ node_modules/
 dist/
 .next/
 *.log
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# local visual review artifacts (don’t commit)
+home.jpeg
+pastresults_old.jpeg
+pastresults_young.jpeg
+payouts.jpeg
+rules.jpeg
