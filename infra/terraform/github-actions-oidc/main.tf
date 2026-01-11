@@ -23,35 +23,33 @@ resource "aws_iam_openid_connect_provider" "github" {
 
 locals {
   oidc_provider_arn = var.existing_oidc_provider_arn != null ? var.existing_oidc_provider_arn : aws_iam_openid_connect_provider.github[0].arn
-}
 
-data "aws_iam_policy_document" "assume_role" {
-  statement {
-    actions = ["sts:AssumeRoleWithWebIdentity"]
-
-    principals {
-      type        = "Federated"
-      identifiers = [local.oidc_provider_arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringLike"
-      variable = "token.actions.githubusercontent.com:sub"
-      values   = [local.repo_sub]
-    }
-  }
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Principal = {
+          Federated = local.oidc_provider_arn
+        }
+        Condition = {
+          StringEquals = {
+            "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+          }
+          StringLike = {
+            "token.actions.githubusercontent.com:sub" = local.repo_sub
+          }
+        }
+      }
+    ]
+  })
 }
 
 resource "aws_iam_role" "deploy" {
   count              = var.create_deploy_role ? 1 : 0
   name               = "${var.project}-github-actions-deploy"
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+  assume_role_policy = local.assume_role_policy
   tags               = local.tags
 }
 
@@ -108,7 +106,7 @@ resource "aws_iam_role_policy_attachment" "deploy" {
 resource "aws_iam_role" "terraform" {
   count              = var.create_terraform_role ? 1 : 0
   name               = "${var.project}-github-actions-terraform"
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+  assume_role_policy = local.assume_role_policy
   tags               = local.tags
 }
 
