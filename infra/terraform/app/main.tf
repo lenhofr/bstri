@@ -10,6 +10,7 @@ locals {
 }
 
 resource "random_id" "bucket_suffix" {
+  count       = var.site_bucket_name == null ? 1 : 0
   byte_length = 4
 
   keepers = {
@@ -19,7 +20,7 @@ resource "random_id" "bucket_suffix" {
 }
 
 locals {
-  site_bucket_name = var.site_bucket_name != null ? var.site_bucket_name : lower("${local.name}-site-${random_id.bucket_suffix.hex}")
+  site_bucket_name = var.site_bucket_name != null ? var.site_bucket_name : lower("${local.name}-site-${random_id.bucket_suffix[0].hex}")
 }
 
 resource "aws_s3_bucket" "site" {
