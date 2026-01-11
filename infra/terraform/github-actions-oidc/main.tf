@@ -24,6 +24,9 @@ resource "aws_iam_openid_connect_provider" "github" {
 locals {
   oidc_provider_arn = var.existing_oidc_provider_arn != null ? var.existing_oidc_provider_arn : aws_iam_openid_connect_provider.github[0].arn
 
+  # IAM expects a federated principal as a domain name for web identity providers.
+  oidc_issuer = "token.actions.githubusercontent.com"
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -31,7 +34,7 @@ locals {
         Effect = "Allow"
         Action = "sts:AssumeRoleWithWebIdentity"
         Principal = {
-          Federated = local.oidc_provider_arn
+          Federated = local.oidc_issuer
         }
         Condition = {
           StringEquals = {
