@@ -71,7 +71,7 @@ resource "aws_s3_bucket_policy" "site" {
 resource "aws_cloudfront_function" "rewrite_directory_index" {
   name    = "${local.name}-rewrite-directory-index"
   runtime = "cloudfront-js-1.0"
-  comment = "Rewrite /foo and /foo/ to /foo/index.html for Next.js static export"
+  comment = "Rewrite /foo and /foo/ to /foo.html for Next.js static export"
   publish = true
 
   code = <<JS
@@ -79,16 +79,19 @@ function handler(event) {
   var request = event.request;
   var uri = request.uri;
 
-  // If the URI is a directory, serve index.html
-  if (uri.endsWith('/')) {
-    request.uri = uri + 'index.html';
+  // Let default_root_object handle "/" and don't rewrite Next.js assets.
+  if (uri === "/" || uri.startsWith("/_next/")) {
     return request;
   }
 
-  // If the URI has no file extension, assume it's a directory path
-  if (uri.indexOf('.') === -1) {
-    request.uri = uri + '/index.html';
-    return request;
+  // Normalize trailing slash.
+  if (uri.endsWith("/")) {
+    uri = uri.slice(0, -1);
+  }
+
+  // If there is no file extension, assume it's a route and map to .html.
+  if (uri.indexOf(".") === -1) {
+    request.uri = uri + ".html";
   }
 
   return request;
