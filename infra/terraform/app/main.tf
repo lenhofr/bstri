@@ -74,7 +74,7 @@ resource "aws_cloudfront_function" "rewrite_directory_index" {
   comment = "Rewrite /foo and /foo/ to /foo/index.html for Next.js static export"
   publish = true
 
-  code = <<'JS'
+  code = <<JS
 function handler(event) {
   var request = event.request;
   var uri = request.uri;
