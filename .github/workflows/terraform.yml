@@ -6,7 +6,6 @@ on:
     paths:
       - 'infra/terraform/app/**'
       - '.github/workflows/terraform.yml'
-  workflow_dispatch:
 
 permissions:
   contents: read
