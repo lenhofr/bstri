@@ -68,6 +68,34 @@ resource "aws_s3_bucket_policy" "site" {
   policy = data.aws_iam_policy_document.site_policy.json
 }
 
+resource "aws_cloudfront_function" "rewrite_directory_index" {
+  name    = "${local.name}-rewrite-directory-index"
+  runtime = "cloudfront-js-1.0"
+  comment = "Rewrite /foo and /foo/ to /foo/index.html for Next.js static export"
+  publish = true
+
+  code = <<'JS'
+function handler(event) {
+  var request = event.request;
+  var uri = request.uri;
+
+  // If the URI is a directory, serve index.html
+  if (uri.endsWith('/')) {
+    request.uri = uri + 'index.html';
+    return request;
+  }
+
+  // If the URI has no file extension, assume it's a directory path
+  if (uri.indexOf('.') === -1) {
+    request.uri = uri + '/index.html';
+    return request;
+  }
+
+  return request;
+}
+JS
+}
+
 resource "aws_cloudfront_distribution" "cdn" {
   enabled             = true
   default_root_object = "index.html"
@@ -85,6 +113,11 @@ resource "aws_cloudfront_distribution" "cdn" {
     target_origin_id = "s3-site"
 
     viewer_protocol_policy = "redirect-to-https"
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.rewrite_directory_index.arn
+    }
 
     forwarded_values {
       query_string = false
