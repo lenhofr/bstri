@@ -3,9 +3,6 @@ name: Terraform (apply)
 on:
   push:
     branches: [main]
-    paths:
-      - 'infra/terraform/app/**'
-      - '.github/workflows/terraform.yml'
 
 permissions:
   contents: read
