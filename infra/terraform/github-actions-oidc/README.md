@@ -2,7 +2,7 @@
 
 Creates:
 - `token.actions.githubusercontent.com` OIDC provider (if not already present)
-- IAM role assumable by GitHub Actions for this repo/branch
+- IAM role assumable by GitHub Actions for this repo/branch **and pull_request workflows**
 - Least-privilege policy for `aws s3 sync` + CloudFront invalidation
 
 ## Bootstrap apply (from your laptop)

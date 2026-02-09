@@ -183,13 +183,24 @@ resource "aws_acm_certificate" "cert" {
   }
 }
 
-resource "aws_route53_record" "cert_validation" {
-  count   = var.custom_domain_name == null ? 0 : length(aws_acm_certificate.cert[0].domain_validation_options)
-  zone_id = var.route53_zone_id
+locals {
+  cert_domains = var.custom_domain_name == null ? [] : concat([var.custom_domain_name], var.alternate_domain_names)
 
-  name    = aws_acm_certificate.cert[0].domain_validation_options[count.index].resource_record_name
-  type    = aws_acm_certificate.cert[0].domain_validation_options[count.index].resource_record_type
-  records = [aws_acm_certificate.cert[0].domain_validation_options[count.index].resource_record_value]
+  # domain_validation_options is a set, so index-free lookup by domain name.
+  cert_validation_by_domain = var.custom_domain_name == null ? {} : {
+    for dvo in aws_acm_certificate.cert[0].domain_validation_options : dvo.domain_name => dvo
+  }
+}
+
+resource "aws_route53_record" "cert_validation" {
+  for_each = toset(local.cert_domains)
+
+  zone_id         = var.route53_zone_id
+  allow_overwrite = true
+
+  name    = local.cert_validation_by_domain[each.key].resource_record_name
+  type    = local.cert_validation_by_domain[each.key].resource_record_type
+  records = [local.cert_validation_by_domain[each.key].resource_record_value]
   ttl     = 60
 }
 
@@ -198,14 +209,15 @@ resource "aws_acm_certificate_validation" "cert" {
   provider        = aws.use1
   certificate_arn = aws_acm_certificate.cert[0].arn
 
-  validation_record_fqdns = aws_route53_record.cert_validation[*].fqdn
+  validation_record_fqdns = [for r in values(aws_route53_record.cert_validation) : r.fqdn]
 }
 
 resource "aws_route53_record" "alias_a" {
-  count   = var.custom_domain_name != null && var.create_route53_record ? 1 : 0
-  zone_id = var.route53_zone_id
-  name    = var.custom_domain_name
-  type    = "A"
+  count           = var.custom_domain_name != null && var.create_route53_record ? 1 : 0
+  zone_id         = var.route53_zone_id
+  allow_overwrite = true
+  name            = var.custom_domain_name
+  type            = "A"
 
   alias {
     name                   = aws_cloudfront_distribution.cdn.domain_name
@@ -215,10 +227,11 @@ resource "aws_route53_record" "alias_a" {
 }
 
 resource "aws_route53_record" "alias_aaaa" {
-  count   = var.custom_domain_name != null && var.create_route53_record ? 1 : 0
-  zone_id = var.route53_zone_id
-  name    = var.custom_domain_name
-  type    = "AAAA"
+  count           = var.custom_domain_name != null && var.create_route53_record ? 1 : 0
+  zone_id         = var.route53_zone_id
+  allow_overwrite = true
+  name            = var.custom_domain_name
+  type            = "AAAA"
 
   alias {
     name                   = aws_cloudfront_distribution.cdn.domain_name
@@ -230,9 +243,10 @@ resource "aws_route53_record" "alias_aaaa" {
 resource "aws_route53_record" "alias_a_alternates" {
   for_each = var.custom_domain_name != null && var.create_route53_record ? toset(var.alternate_domain_names) : toset([])
 
-  zone_id = var.route53_zone_id
-  name    = each.value
-  type    = "A"
+  zone_id         = var.route53_zone_id
+  allow_overwrite = true
+  name            = each.value
+  type            = "A"
 
   alias {
     name                   = aws_cloudfront_distribution.cdn.domain_name
@@ -244,9 +258,10 @@ resource "aws_route53_record" "alias_a_alternates" {
 resource "aws_route53_record" "alias_aaaa_alternates" {
   for_each = var.custom_domain_name != null && var.create_route53_record ? toset(var.alternate_domain_names) : toset([])
 
-  zone_id = var.route53_zone_id
-  name    = each.value
-  type    = "AAAA"
+  zone_id         = var.route53_zone_id
+  allow_overwrite = true
+  name            = each.value
+  type            = "AAAA"
 
   alias {
     name                   = aws_cloudfront_distribution.cdn.domain_name

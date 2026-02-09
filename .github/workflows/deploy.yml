@@ -61,11 +61,12 @@ jobs:
         run: |
           echo "S3_BUCKET=$(terraform output -raw bucket_name)" >> "$GITHUB_ENV"
           echo "CLOUDFRONT_DISTRIBUTION_ID=$(terraform output -raw cloudfront_distribution_id)" >> "$GITHUB_ENV"
+          echo "DEPLOY_ROLE_ARN=$(terraform output -raw github_actions_role_arn)" >> "$GITHUB_ENV"
 
       - name: Configure AWS credentials (OIDC) for deploy
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-to-assume: ${{ env.DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Sync to S3
