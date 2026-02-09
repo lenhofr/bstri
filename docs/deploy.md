@@ -5,10 +5,7 @@ We deploy the **static Next.js build** (`web/out`) to S3 and then invalidate Clo
 ## Required GitHub configuration
 
 ### Repo secrets
-- `AWS_TERRAFORM_ROLE_ARN` — IAM role to assume via GitHub OIDC for Terraform apply/outputs
-- `AWS_ROLE_ARN` — IAM role to assume via GitHub OIDC for S3 sync + CloudFront invalidation
-
-> Tip: For staging vs prod, use **GitHub Environments** (e.g. an environment named `staging`) so each workflow can use different environment-scoped secrets.
+- `AWS_TERRAFORM_ROLE_ARN` — IAM role to assume via GitHub OIDC for Terraform apply/outputs (deploy role ARN is read from Terraform outputs at deploy-time)
 
 ### Repo variables
 This repo reads these from Terraform outputs at deploy-time, so you generally don’t need repo variables for bucket/distribution IDs.

@@ -1,11 +1,7 @@
 name: Terraform (apply) - staging
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'infra/terraform/app/**'
-      - '.github/workflows/terraform-staging.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
