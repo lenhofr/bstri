@@ -7,11 +7,8 @@ data "tls_certificate" "github_actions" {
 locals {
   tags = merge(var.tags, { project = var.project })
 
-  # Allow both main-branch runs and PR plan runs.
-  repo_subs = [
-    "repo:${var.github_owner}/${var.github_repo}:ref:refs/heads/${var.github_branch}",
-    "repo:${var.github_owner}/${var.github_repo}:pull_request",
-  ]
+  # Allow all workflows in this repo (push, PR, workflow_run, workflow_dispatch, etc.).
+  repo_sub = "repo:${var.github_owner}/${var.github_repo}:*"
 
   bucket_arn = var.s3_bucket_name == null ? null : "arn:aws:s3:::${var.s3_bucket_name}"
   dist_arn   = var.cloudfront_distribution_id == null ? null : "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/${var.cloudfront_distribution_id}"
@@ -45,7 +42,7 @@ locals {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
           StringLike = {
-            "token.actions.githubusercontent.com:sub" = local.repo_subs
+            "token.actions.githubusercontent.com:sub" = local.repo_sub
           }
         }
       }
