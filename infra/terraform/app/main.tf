@@ -80,7 +80,7 @@ function handler(event) {
   var uri = request.uri;
 
   var redirectWwwToApex = ${var.redirect_www_to_apex};
-  var apexHost = "${var.custom_domain_name}";
+  var apexHost = "${var.custom_domain_name != null ? var.custom_domain_name : ""}";
 
   // Optional www -> apex redirect (staging/prod preference).
   if (redirectWwwToApex && request.headers && request.headers.host && request.headers.host.value) {
