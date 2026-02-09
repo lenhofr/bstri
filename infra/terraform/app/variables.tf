@@ -35,18 +35,30 @@ variable "tags" {
 
 variable "custom_domain_name" {
   type        = string
-  description = "Optional custom domain (e.g. staging.barsportstri.com). Leave null to use CloudFront domain."
+  description = "Optional custom domain apex (e.g. barsportsdev.com). Leave null to use the CloudFront domain."
   default     = null
+}
+
+variable "alternate_domain_names" {
+  type        = list(string)
+  description = "Optional additional domain names (e.g. [\"www.barsportsdev.com\"]). Only used when custom_domain_name is set."
+  default     = []
+}
+
+variable "redirect_www_to_apex" {
+  type        = bool
+  description = "When true, redirect www.<custom_domain_name> to the apex via CloudFront Function."
+  default     = false
 }
 
 variable "route53_zone_id" {
   type        = string
-  description = "Optional Route53 hosted zone ID used for ACM DNS validation + alias record."
+  description = "Optional Route53 hosted zone ID used for ACM DNS validation + alias records."
   default     = null
 }
 
 variable "create_route53_record" {
   type        = bool
-  description = "When true, create Route53 alias record for custom_domain_name in route53_zone_id."
+  description = "When true, create Route53 alias records for custom_domain_name (and alternates) in route53_zone_id."
   default     = false
 }
