@@ -79,6 +79,23 @@ function handler(event) {
   var request = event.request;
   var uri = request.uri;
 
+  var redirectWwwToApex = ${var.redirect_www_to_apex};
+  var apexHost = "${var.custom_domain_name}";
+
+  // Optional www -> apex redirect (staging/prod preference).
+  if (redirectWwwToApex && request.headers && request.headers.host && request.headers.host.value) {
+    var host = request.headers.host.value;
+    if (apexHost && host === ("www." + apexHost)) {
+      return {
+        statusCode: 301,
+        statusDescription: "Moved Permanently",
+        headers: {
+          location: { value: "https://" + apexHost + request.uri }
+        }
+      };
+    }
+  }
+
   // Let default_root_object handle "/" and don't rewrite Next.js assets.
   if (uri === "/" || uri.startsWith("/_next/")) {
     return request;
@@ -145,17 +162,18 @@ resource "aws_cloudfront_distribution" "cdn" {
     minimum_protocol_version       = "TLSv1.2_2021"
   }
 
-  aliases = var.custom_domain_name == null ? [] : [var.custom_domain_name]
+  aliases = var.custom_domain_name == null ? [] : concat([var.custom_domain_name], var.alternate_domain_names)
 
   tags = local.tags
 }
 
 resource "aws_acm_certificate" "cert" {
-  count             = var.custom_domain_name == null ? 0 : 1
-  provider          = aws.use1
-  domain_name       = var.custom_domain_name
-  validation_method = "DNS"
-  tags              = local.tags
+  count                     = var.custom_domain_name == null ? 0 : 1
+  provider                  = aws.use1
+  domain_name               = var.custom_domain_name
+  subject_alternative_names = var.alternate_domain_names
+  validation_method         = "DNS"
+  tags                      = local.tags
 
   lifecycle {
     precondition {
@@ -200,6 +218,34 @@ resource "aws_route53_record" "alias_aaaa" {
   count   = var.custom_domain_name != null && var.create_route53_record ? 1 : 0
   zone_id = var.route53_zone_id
   name    = var.custom_domain_name
+  type    = "AAAA"
+
+  alias {
+    name                   = aws_cloudfront_distribution.cdn.domain_name
+    zone_id                = aws_cloudfront_distribution.cdn.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+resource "aws_route53_record" "alias_a_alternates" {
+  for_each = var.custom_domain_name != null && var.create_route53_record ? toset(var.alternate_domain_names) : toset([])
+
+  zone_id = var.route53_zone_id
+  name    = each.value
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.cdn.domain_name
+    zone_id                = aws_cloudfront_distribution.cdn.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+resource "aws_route53_record" "alias_aaaa_alternates" {
+  for_each = var.custom_domain_name != null && var.create_route53_record ? toset(var.alternate_domain_names) : toset([])
+
+  zone_id = var.route53_zone_id
+  name    = each.value
   type    = "AAAA"
 
   alias {
