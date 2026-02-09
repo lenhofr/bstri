@@ -183,8 +183,12 @@ resource "aws_acm_certificate" "cert" {
   }
 }
 
+locals {
+  cert_domains = var.custom_domain_name == null ? [] : concat([var.custom_domain_name], var.alternate_domain_names)
+}
+
 resource "aws_route53_record" "cert_validation" {
-  count           = var.custom_domain_name == null ? 0 : length(aws_acm_certificate.cert[0].domain_validation_options)
+  count           = length(local.cert_domains)
   zone_id         = var.route53_zone_id
   allow_overwrite = true
 
