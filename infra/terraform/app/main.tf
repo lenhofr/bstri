@@ -157,9 +157,11 @@ resource "aws_cloudfront_distribution" "cdn" {
 
   viewer_certificate {
     cloudfront_default_certificate = var.custom_domain_name == null
-    acm_certificate_arn            = var.custom_domain_name == null ? null : aws_acm_certificate_validation.cert[0].certificate_arn
-    ssl_support_method             = var.custom_domain_name == null ? null : "sni-only"
-    minimum_protocol_version       = "TLSv1.2_2021"
+    acm_certificate_arn = var.custom_domain_name == null ? null : (
+      var.existing_acm_certificate_arn != null ? var.existing_acm_certificate_arn : aws_acm_certificate_validation.cert[0].certificate_arn
+    )
+    ssl_support_method       = var.custom_domain_name == null ? null : "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
   }
 
   aliases = var.custom_domain_name == null ? [] : concat([var.custom_domain_name], var.alternate_domain_names)
@@ -167,8 +169,19 @@ resource "aws_cloudfront_distribution" "cdn" {
   tags = local.tags
 }
 
+locals {
+  create_acm_cert = var.custom_domain_name != null && var.existing_acm_certificate_arn == null
+
+  cert_domains = !local.create_acm_cert ? [] : concat([var.custom_domain_name], var.alternate_domain_names)
+
+  # domain_validation_options is a set, so index-free lookup by domain name.
+  cert_validation_by_domain = !local.create_acm_cert ? {} : {
+    for dvo in aws_acm_certificate.cert[0].domain_validation_options : dvo.domain_name => dvo
+  }
+}
+
 resource "aws_acm_certificate" "cert" {
-  count                     = var.custom_domain_name == null ? 0 : 1
+  count                     = local.create_acm_cert ? 1 : 0
   provider                  = aws.use1
   domain_name               = var.custom_domain_name
   subject_alternative_names = var.alternate_domain_names
@@ -177,18 +190,9 @@ resource "aws_acm_certificate" "cert" {
 
   lifecycle {
     precondition {
-      condition     = var.custom_domain_name == null || var.route53_zone_id != null
-      error_message = "route53_zone_id must be set when using custom_domain_name (needed for ACM DNS validation)."
+      condition     = !local.create_acm_cert || var.route53_zone_id != null
+      error_message = "route53_zone_id must be set when using custom_domain_name without existing_acm_certificate_arn (needed for ACM DNS validation)."
     }
-  }
-}
-
-locals {
-  cert_domains = var.custom_domain_name == null ? [] : concat([var.custom_domain_name], var.alternate_domain_names)
-
-  # domain_validation_options is a set, so index-free lookup by domain name.
-  cert_validation_by_domain = var.custom_domain_name == null ? {} : {
-    for dvo in aws_acm_certificate.cert[0].domain_validation_options : dvo.domain_name => dvo
   }
 }
 
@@ -205,7 +209,7 @@ resource "aws_route53_record" "cert_validation" {
 }
 
 resource "aws_acm_certificate_validation" "cert" {
-  count           = var.custom_domain_name == null ? 0 : 1
+  count           = local.create_acm_cert ? 1 : 0
   provider        = aws.use1
   certificate_arn = aws_acm_certificate.cert[0].arn
 

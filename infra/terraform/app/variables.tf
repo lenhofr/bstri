@@ -39,6 +39,12 @@ variable "custom_domain_name" {
   default     = null
 }
 
+variable "existing_acm_certificate_arn" {
+  type        = string
+  description = "If set, reuse an existing ACM certificate ARN (must be in us-east-1 for CloudFront) instead of creating/validating a new cert."
+  default     = null
+}
+
 variable "alternate_domain_names" {
   type        = list(string)
   description = "Optional additional domain names (e.g. [\"www.barsportsdev.com\"]). Only used when custom_domain_name is set."
