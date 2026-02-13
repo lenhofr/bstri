@@ -54,7 +54,7 @@ jobs:
 
             // GitHub comment body limit is ~65k characters.
             const trimmed = plan.length > 65000 ? plan.slice(0, 65000) + "\n\n... (truncated)" : plan;
-            const body = `<!-- terraform-plan -->\n#### Terraform plan (infra/terraform/app)\n\n\`\`\`\n${trimmed}\n\`\`\``;
+            const body = `<!-- terraform-plan -->\n<details>\n<summary><strong>Terraform plan (infra/terraform/app)</strong></summary>\n\n\`\`\`\n${trimmed}\n\`\`\`\n</details>`;
 
             const { owner, repo } = context.repo;
             const issue_number = context.payload.pull_request.number;
