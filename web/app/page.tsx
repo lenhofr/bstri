@@ -10,7 +10,7 @@ export default function Home() {
       <div className="grid2">
         <section className="card">
           <h3>Old Guys: March 28th, 2026</h3>
-          <p className="subtle">The 39th Annual</p>
+          <p className="subtle">The 40th Annual</p>
         </section>
 
         <section className="card">
