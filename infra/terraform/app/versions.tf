@@ -2,10 +2,11 @@ terraform {
   required_version = ">= 1.6.0"
 
   backend "s3" {
-    bucket  = "tf-state-common-217354297026-us-east-1"
-    key     = "bstri/terraform.tfstate"
-    region  = "us-east-1"
-    encrypt = true
+    bucket         = "tf-state-bstri-prod-217354297026-us-east-1"
+    key            = "bstri/prod/terraform.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "bstri-prod-tf-lock"
+    encrypt        = true
   }
 
   required_providers {
