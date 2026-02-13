@@ -5,7 +5,7 @@ export default function Home() {
     <>
       <PanelIcons />
 
-      <h1 className="panelTitle">2026 Events (deploy test)</h1>
+      <h1 className="panelTitle">2026 Events</h1>
 
       <div className="grid2">
         <section className="card">
