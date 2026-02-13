@@ -9,6 +9,9 @@ dist/
 *.tfstate
 *.tfstate.*
 
+# Next.js static export output
+web/out/
+
 # local visual review artifacts (don’t commit)
 home.jpeg
 pastresults_old.jpeg
