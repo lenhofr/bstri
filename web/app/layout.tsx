@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { Inter, Permanent_Marker } from 'next/font/google';
 
 import './globals.css';
@@ -21,7 +22,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="frame">
             <main className="panel">{children}</main>
           </div>
-          <div className="footer">© Bar Sports Triathlon</div>
+          <div className="footer">
+            © Bar Sports Triathlon{' '}
+            <Link href="/admin/scoring" style={{ opacity: 0.6, fontSize: 12, textDecoration: 'none' }}>
+              Manage your Tri
+            </Link>
+          </div>
         </div>
       </body>
     </html>

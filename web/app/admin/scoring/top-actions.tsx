@@ -25,7 +25,7 @@ function badgeStyle(params?: { bg?: string; border?: string; color?: string }): 
 }
 
 export default function ActionsBar() {
-  const { eventId, year, doc, onSaveDraft, onPublish, flash, setFlash } = useScoring();
+  const { eventId, activeEventId, setActiveEventId, year, doc, onSaveDraft, onPublish, flash, setFlash } = useScoring();
 
   const backend = useMemo(() => hasBackendConfig(), []);
 
@@ -52,6 +52,9 @@ export default function ActionsBar() {
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={badgeStyle()}>
             Event <code>{eventId}</code>
+          </span>
+          <span style={badgeStyle(activeEventId ? { bg: 'rgba(34,197,94,0.10)', border: 'rgba(34,197,94,0.35)' } : undefined)}>
+            Active <code>{activeEventId ?? '—'}</code>
           </span>
           <span style={badgeStyle()}>
             Year <b>{year}</b>
@@ -94,6 +97,7 @@ export default function ActionsBar() {
                 } else {
                   setLocalActiveEventId(eventId);
                 }
+                setActiveEventId(eventId);
                 setFlash({ message: 'Set as active triathlon', tone: 'success', at: Date.now() });
               } catch (e) {
                 setFlash({ message: (e as Error)?.message ?? String(e), tone: 'error', at: Date.now() });
@@ -101,6 +105,28 @@ export default function ActionsBar() {
             }}
           >
             Set Active
+          </button>
+
+          <button
+            onClick={async () => {
+              try {
+                if (!confirm('Deactivate the active triathlon? This will remove the default scoring page selection.')) return;
+                if (backend) {
+                  const accessToken = getAccessToken();
+                  if (!accessToken) throw new Error('Not logged in (Cognito)');
+                  if (!runtimeConfig.scoringApiBaseUrl) throw new Error('Missing scoringApiBaseUrl');
+                  await apiPutActiveTriathlon({ apiBaseUrl: runtimeConfig.scoringApiBaseUrl, accessToken, activeEventId: null });
+                } else {
+                  setLocalActiveEventId(null);
+                }
+                setActiveEventId(null);
+                setFlash({ message: 'Deactivated active triathlon', tone: 'success', at: Date.now() });
+              } catch (e) {
+                setFlash({ message: (e as Error)?.message ?? String(e), tone: 'error', at: Date.now() });
+              }
+            }}
+          >
+            Deactivate
           </button>
           <button
             disabled={saveDisabled}
