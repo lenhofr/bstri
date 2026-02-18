@@ -25,6 +25,21 @@ function loadPublishedDoc(key: string): ScoringDocumentV1 | null {
   }
 }
 
+function formatPublishedAt(timestamp: string | null): string | null {
+  if (!timestamp) return null;
+  const ms = Date.parse(timestamp);
+  if (!Number.isFinite(ms)) return timestamp;
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short'
+  }).format(new Date(ms));
+}
+
 type SortDir = 'asc' | 'desc';
 
 type SortSpec = { key: string; dir: SortDir };
@@ -258,20 +273,13 @@ export default function PublishedScoringClient() {
       </h1>
       <p className="kicker" style={{ marginTop: 0 }}>
         {screenState === 'ready'
-          ? 'Published results for the active triathlon.'
+          ? "It's a Triathlon, not a sprint."
           : screenState === 'loading'
             ? 'Loading active triathlon results...'
             : screenState === 'empty'
               ? 'No active TRI? Get back to training!'
               : 'Unable to load active triathlon results.'}
       </p>
-
-      {activeEventId ? (
-        <div className="card" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontSize: 12, opacity: 0.85 }}>Active Triathlon</span>
-          <code style={{ fontSize: 15, fontWeight: 700 }}>{activeEventId}</code>
-        </div>
-      ) : null}
 
       {screenState === 'loading' ? (
         <div className="card" style={{ marginTop: 10 }}>
@@ -296,11 +304,10 @@ export default function PublishedScoringClient() {
         <div style={{ marginTop: 12 }}>
           <div className="card">
             <div style={{ fontSize: 12, opacity: 0.9 }}>
-              Status: <b>{doc.status}</b>
+              Published
               {doc.publishedAt ? (
                 <>
-                  {' '}
-                  • Published at: <code>{doc.publishedAt}</code>
+                  : <b>{formatPublishedAt(doc.publishedAt)}</b>
                 </>
               ) : null}
             </div>
