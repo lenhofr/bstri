@@ -102,6 +102,27 @@ export default function ActionsBar() {
           >
             Set Active
           </button>
+
+          <button
+            onClick={async () => {
+              try {
+                if (!confirm('Deactivate the active triathlon? This will remove the default scoring page selection.')) return;
+                if (backend) {
+                  const accessToken = getAccessToken();
+                  if (!accessToken) throw new Error('Not logged in (Cognito)');
+                  if (!runtimeConfig.scoringApiBaseUrl) throw new Error('Missing scoringApiBaseUrl');
+                  await apiPutActiveTriathlon({ apiBaseUrl: runtimeConfig.scoringApiBaseUrl, accessToken, activeEventId: null });
+                } else {
+                  setLocalActiveEventId(null);
+                }
+                setFlash({ message: 'Deactivated active triathlon', tone: 'success', at: Date.now() });
+              } catch (e) {
+                setFlash({ message: (e as Error)?.message ?? String(e), tone: 'error', at: Date.now() });
+              }
+            }}
+          >
+            Deactivate
+          </button>
           <button
             disabled={saveDisabled}
             title={saveDisabled ? 'Select a triathlon first' : undefined}

@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 
 const links = [
   { href: '/', label: 'Events' },
+  { href: '/scoring', label: 'Live Scoring' },
   { href: '/rules', label: 'Rules' },
   { href: '/payouts', label: 'Payouts / Scoring' }
 ];
@@ -80,6 +81,9 @@ export function TopNav() {
               </div>
             </details>
 
+            <Link href="/scoring" onClick={(e) => closeDropdown(e.target)}>
+              Live Scoring
+            </Link>
             <Link href="/rules" onClick={(e) => closeDropdown(e.target)}>
               Rules
             </Link>
