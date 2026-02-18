@@ -50,6 +50,7 @@ function saveDoc(key: string, doc: ScoringDocumentV1) {
 
 type ScoringCtx = {
   eventId: string;
+  activeEventId: string | null;
   year: number;
   doc: ScoringDocumentV1;
   draftKey: string;
@@ -59,6 +60,7 @@ type ScoringCtx = {
   setFlash: (flash: Flash) => void;
 
   setEventId: (eventId: string) => void;
+  setActiveEventId: (eventId: string | null) => void;
   setYear: (year: number) => void;
 
   onNewDoc: () => void;
@@ -93,6 +95,7 @@ export function useScoring() {
 
 export function ScoringProvider(props: { children: React.ReactNode }) {
   const [eventId, setEventIdState] = useState('');
+  const [activeEventId, setActiveEventId] = useState<string | null>(null);
   const [year, setYearState] = useState(2026);
 
   // Avoid hydration mismatches: deterministic initial doc during SSR.
@@ -137,6 +140,10 @@ export function ScoringProvider(props: { children: React.ReactNode }) {
     if (y != null) setYearState(y);
   }
 
+  function setActive(next: string | null) {
+    setActiveEventId(next);
+  }
+
   function setYear(next: number) {
     setYearState(next);
     setDoc((prev) => ({ ...prev, year: next }));
@@ -160,6 +167,7 @@ export function ScoringProvider(props: { children: React.ReactNode }) {
         const activeEventId = hasBackendConfig()
           ? (await apiGetActiveTriathlon({ apiBaseUrl: runtimeConfig.scoringApiBaseUrl! })).activeEventId
           : getLocalActiveEventId();
+        setActiveEventId(activeEventId);
         if (!activeEventId) return;
 
         setEventIdState(activeEventId);
@@ -424,6 +432,7 @@ export function ScoringProvider(props: { children: React.ReactNode }) {
     <Ctx.Provider
       value={{
         eventId,
+        activeEventId,
         year,
         doc,
         draftKey,
@@ -431,6 +440,7 @@ export function ScoringProvider(props: { children: React.ReactNode }) {
         flash,
         setFlash,
         setEventId,
+        setActiveEventId: setActive,
         setYear,
         onNewDoc,
         onNewDocFor,
