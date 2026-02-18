@@ -398,6 +398,14 @@ export function recomputeDocumentDerivedFields(params: {
           scheduledMatchCount > 0 &&
           recordedMatchCount < scheduledMatchCount;
 
+        // If there are no scheduled matches and no recorded matches, we should not show a computed leader.
+        // This prevents stale computed places (e.g. when a 2nd competitor is added later).
+        const poolHasNoData =
+          poolWinnerKey != null &&
+          scheduledMatchCount === 0 &&
+          params.doc.poolMatches.length === 0 &&
+          Object.values(withRaw.results).every((r) => r.raw === 0 || r.raw == null);
+
         const places = poolInProgress
           ? (Object.fromEntries(Object.keys(withRaw.results).map((pid) => [pid, null])) as Record<PersonId, number | null>)
           : poolRun?.places ??
@@ -421,7 +429,7 @@ export function recomputeDocumentDerivedFields(params: {
             manualFromRuns ||
             (isGenericRawRank && typeof raw === 'number' && (rawCounts.get(raw) ?? 0) > 1);
           const computedPlace = places[personId] ?? null;
-          nextPlaces[personId] = raw == null ? null : needsManual ? (prev.place ?? null) : computedPlace;
+          nextPlaces[personId] = poolHasNoData ? null : raw == null ? null : needsManual ? (prev.place ?? null) : computedPlace;
         }
 
         const placeCounts = new Map<number, number>();
