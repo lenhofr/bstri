@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { apiGetActiveTriathlon, apiGetPublished } from '../../lib/scoring-api';
 import { hasBackendConfig, runtimeConfig } from '../../lib/runtime-config';
 import type { Game, ScoringDocumentV1, SubEvent } from '../../lib/scoring-model';
 import { emptyGameResult } from '../../lib/scoring-rules';
 import { getLocalActiveEventId } from '../../lib/active-triathlon';
-import { listLocalStorageTriathlonDocs, type TriathlonDocSummary } from '../../lib/triathlon-docs';
 
 const LS_PUBLISHED_PREFIX = 'bstri:scoring:published:';
 
@@ -106,57 +105,59 @@ function GameTable(props: {
   return (
     <div className="card" style={{ marginTop: 10 }}>
       <h4 style={{ margin: '0 0 8px' }}>{game.label}</h4>
-      <table className="table">
-        <thead>
-          <tr>
-            <th style={{ cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'competitor', 'asc'))}>
-              Competitor{sortMark(sort.key === 'competitor', sort.dir)}
-            </th>
-            {showAttempts && (
-              <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'a1', 'desc'))}>
-                Attempt 1{sortMark(sort.key === 'a1', sort.dir)}
+      <div className="scoringTableWrap">
+        <table className="table scoringTable" style={{ minWidth: showAttempts ? 760 : 520 }}>
+          <thead>
+            <tr>
+              <th style={{ cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'competitor', 'asc'))}>
+                Competitor{sortMark(sort.key === 'competitor', sort.dir)}
               </th>
-            )}
-            {showAttempts && (
-              <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'a2', 'desc'))}>
-                Attempt 2{sortMark(sort.key === 'a2', sort.dir)}
+              {showAttempts && (
+                <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'a1', 'desc'))}>
+                  Attempt 1{sortMark(sort.key === 'a1', sort.dir)}
+                </th>
+              )}
+              {showAttempts && (
+                <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'a2', 'desc'))}>
+                  Attempt 2{sortMark(sort.key === 'a2', sort.dir)}
+                </th>
+              )}
+              {showAttempts && (
+                <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'tb', 'desc'))}>
+                  Tiebreaker{sortMark(sort.key === 'tb', sort.dir)}
+                </th>
+              )}
+              {showRaw && (
+                <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'raw', 'desc'))}>
+                  {rawLabel}{sortMark(sort.key === 'raw', sort.dir)}
+                </th>
+              )}
+              <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'place', 'asc'))}>
+                Place{sortMark(sort.key === 'place', sort.dir)}
               </th>
-            )}
-            {showAttempts && (
-              <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'tb', 'desc'))}>
-                Tiebreaker{sortMark(sort.key === 'tb', sort.dir)}
+              <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'points', 'desc'))}>
+                Points{sortMark(sort.key === 'points', sort.dir)}
               </th>
-            )}
-            {showRaw && (
-              <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'raw', 'desc'))}>
-                {rawLabel}{sortMark(sort.key === 'raw', sort.dir)}
-              </th>
-            )}
-            <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'place', 'asc'))}>
-              Place{sortMark(sort.key === 'place', sort.dir)}
-            </th>
-            <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'points', 'desc'))}>
-              Points{sortMark(sort.key === 'points', sort.dir)}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {sorted.map(({ p, r }) => {
-            const attempts = r.attempts ?? [0, 0, 0];
-            return (
-              <tr key={p.personId}>
-                <td>{p.displayName}</td>
-                {showAttempts && <td>{attempts[0] || '-'}</td>}
-                {showAttempts && <td>{attempts[1] || '-'}</td>}
-                {showAttempts && <td>{attempts[2] || '-'}</td>}
-                {showRaw && <td>{r.raw ?? '-'}</td>}
-                <td>{renderPlace(r.place)}</td>
-                <td>{r.points ?? '-'}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map(({ p, r }) => {
+              const attempts = r.attempts ?? [0, 0, 0];
+              return (
+                <tr key={p.personId}>
+                  <td>{p.displayName}</td>
+                  {showAttempts && <td>{attempts[0] || '-'}</td>}
+                  {showAttempts && <td>{attempts[1] || '-'}</td>}
+                  {showAttempts && <td>{attempts[2] || '-'}</td>}
+                  {showRaw && <td>{r.raw ?? '-'}</td>}
+                  <td>{renderPlace(r.place)}</td>
+                  <td>{r.points ?? '-'}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -194,10 +195,9 @@ function SubEventSection(props: {
 }
 
 export default function PublishedScoringClient() {
-  const [eventId, setEventId] = useState('');
-  const publishedKey = useMemo(() => `${LS_PUBLISHED_PREFIX}${eventId}`, [eventId]);
-
+  const [activeEventId, setActiveEventId] = useState<string | null>(null);
   const [doc, setDoc] = useState<ScoringDocumentV1 | null>(null);
+  const [screenState, setScreenState] = useState<'loading' | 'ready' | 'empty' | 'error'>('loading');
 
   const orderedParticipants = useMemo(() => {
     if (!doc) return [];
@@ -208,86 +208,45 @@ export default function PublishedScoringClient() {
     return competitorOrder.map((pid) => participantsById.get(pid)).filter((p): p is (typeof participants)[number] => Boolean(p));
   }, [doc]);
   const [error, setError] = useState<string | null>(null);
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const [availableDocs, setAvailableDocs] = useState<TriathlonDocSummary[]>([]);
-  const [docsYearFilter, setDocsYearFilter] = useState<number | null>(null);
-  const [docSearch, setDocSearch] = useState('');
-  const [selectedDocKey, setSelectedDocKey] = useState('');
-
-  const filteredDocs = useMemo(() => {
-    const q = docSearch.trim().toLowerCase();
-    const docs = availableDocs.filter((d) => d.kind === 'published');
-    const filtered = docsYearFilter == null ? docs : docs.filter((d) => d.year == docsYearFilter);
-    if (!q) return filtered;
-    return filtered.filter((d) => d.eventId.toLowerCase().includes(q));
-  }, [availableDocs, docSearch, docsYearFilter]);
-
-  const selectedDoc = useMemo(
-    () => filteredDocs.find((d) => `${d.kind}:${d.eventId}` === selectedDocKey),
-    [filteredDocs, selectedDocKey]
-  );
-
-  function refreshDocs() {
-    setAvailableDocs(listLocalStorageTriathlonDocs({}));
-  }
-
-  function openPicker() {
-    refreshDocs();
-    dialogRef.current?.showModal();
-  }
-
-  function closePicker() {
-    dialogRef.current?.close();
-  }
-
-  async function onUseSelected() {
-    if (!selectedDoc) return;
-    setEventId(selectedDoc.eventId);
-    setSelectedDocKey('');
-    closePicker();
-    await onLoad(selectedDoc.eventId);
-  }
 
   const [sortByGame, setSortByGame] = useState<Record<string, SortSpec>>({});
   const [totalsSort, setTotalsSort] = useState<SortSpec>({ key: 'triathlon', dir: 'desc' });
 
   useEffect(() => {
-    (async () => {
-      try {
-        const activeEventId = hasBackendConfig()
-          ? (await apiGetActiveTriathlon({ apiBaseUrl: runtimeConfig.scoringApiBaseUrl! })).activeEventId
-          : getLocalActiveEventId();
-        if (!activeEventId) return;
-        setEventId(activeEventId);
-        await onLoad(activeEventId);
-      } catch {
-        // If active triathlon isn't configured yet, do nothing.
-      }
-    })();
+    void loadActivePublished();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function onLoad(nextEventId?: string) {
-    const id = (nextEventId ?? eventId).trim();
-    if (!id) return;
+  async function loadActivePublished() {
+    setScreenState('loading');
+    setError(null);
+    setDoc(null);
     try {
-      if (hasBackendConfig()) {
-        const loaded = await apiGetPublished({ apiBaseUrl: runtimeConfig.scoringApiBaseUrl!, eventId: id });
-        setError(null);
-        setDoc(loaded);
+      const nextActiveEventId = hasBackendConfig()
+        ? (await apiGetActiveTriathlon({ apiBaseUrl: runtimeConfig.scoringApiBaseUrl! })).activeEventId
+        : getLocalActiveEventId();
+      if (!nextActiveEventId) {
+        setActiveEventId(null);
+        setScreenState('empty');
         return;
       }
 
-      const loaded = loadPublishedDoc(`${LS_PUBLISHED_PREFIX}${id}`);
-      if (!loaded) {
-        setDoc(null);
-        setError('No published doc found in localStorage for this Triathlon Name.');
+      setActiveEventId(nextActiveEventId);
+
+      if (hasBackendConfig()) {
+        const loaded = await apiGetPublished({ apiBaseUrl: runtimeConfig.scoringApiBaseUrl!, eventId: nextActiveEventId });
+        setDoc(loaded);
+        setScreenState('ready');
         return;
       }
-      setError(null);
+
+      const loaded = loadPublishedDoc(`${LS_PUBLISHED_PREFIX}${nextActiveEventId}`);
+      if (!loaded) throw new Error('No published results found for the active triathlon yet.');
       setDoc(loaded);
+      setScreenState('ready');
     } catch (e) {
       setDoc(null);
+      setScreenState('error');
       setError((e as Error)?.message ?? String(e));
     }
   }
@@ -295,83 +254,45 @@ export default function PublishedScoringClient() {
   return (
     <div style={{ padding: 16 }}>
       <h1 className="panelTitle" style={{ marginBottom: 4 }}>
-        Published Results
+        {activeEventId ? `Live Scoring — ${activeEventId}` : 'Live Scoring'}
       </h1>
       <p className="kicker" style={{ marginTop: 0 }}>
-        Running results...
+        {screenState === 'ready'
+          ? 'Published results for the active triathlon.'
+          : screenState === 'loading'
+            ? 'Loading active triathlon results...'
+            : screenState === 'empty'
+              ? 'No active TRI? Get back to training!'
+              : 'Unable to load active triathlon results.'}
       </p>
 
-      <div className="card" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ fontSize: 12, opacity: 0.85 }}>Triathlon</div>
-        <div>
-          <code>{eventId}</code>
+      {activeEventId ? (
+        <div className="card" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontSize: 12, opacity: 0.85 }}>Active Triathlon</span>
+          <code style={{ fontSize: 15, fontWeight: 700 }}>{activeEventId}</code>
         </div>
-        <button onClick={openPicker}>Select…</button>
-        <button onClick={() => void onLoad()}>Load Published</button>
-        <div style={{ marginLeft: 'auto', fontSize: 12, opacity: 0.85 }}>
-          Key: <code>{publishedKey}</code>
-        </div>
-      </div>
+      ) : null}
 
-      <dialog ref={dialogRef} className="bstDialog">
-        <div className="bstDialogHeader">
-          <b>Select triathlon</b>
-          <button style={{ marginLeft: 'auto' }} onClick={closePicker}>
-            Close
-          </button>
+      {screenState === 'loading' ? (
+        <div className="card" style={{ marginTop: 10 }}>
+          Loading published results...
         </div>
-        <div className="bstDialogBody">
-          <div className="card" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-            <label style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              Year
-              <input
-                type="number"
-                value={docsYearFilter ?? ''}
-                onChange={(e) => setDocsYearFilter(e.target.value ? Number(e.target.value) : null)}
-                style={{ width: 90 }}
-              />
-            </label>
-            <label style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              Search
-              <input value={docSearch} onChange={(e) => setDocSearch(e.target.value)} placeholder="eventId contains…" />
-            </label>
-            <button onClick={refreshDocs}>Refresh</button>
-            <div style={{ fontSize: 12, opacity: 0.85 }}>Found: {filteredDocs.length}</div>
-          </div>
+      ) : null}
 
-          {filteredDocs.length === 0 ? (
-            <div className="card" style={{ fontSize: 12, opacity: 0.9 }}>
-              No published triathlons found in localStorage yet. If you’re using the AWS backend, you can still load by typing the eventId in the URL/API for now.
-            </div>
-          ) : (
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              <select
-                value={selectedDocKey}
-                onChange={(e) => setSelectedDocKey(e.target.value)}
-                style={{ minWidth: 360, maxWidth: '100%' }}
-              >
-                <option value="">— Select —</option>
-                {filteredDocs.map((d) => (
-                  <option key={`${d.kind}:${d.eventId}`} value={`${d.kind}:${d.eventId}`}>
-                    {d.eventId} ({d.year}) • {d.updatedAt ?? '-'}
-                  </option>
-                ))}
-              </select>
-              <button disabled={!selectedDoc} onClick={() => void onUseSelected()}>
-                Use
-              </button>
-            </div>
-          )}
-        </div>
-      </dialog>
-
-      {error && (
+      {screenState === 'error' ? (
         <div className="card" style={{ marginTop: 10, color: '#b00020' }}>
-          {error}
+          {error ?? 'Unable to load published results for the active triathlon.'}
+          <div style={{ marginTop: 8 }}>
+            Check the active triathlon in{' '}
+            <a href="/admin/scoring" style={{ textDecoration: 'underline' }}>
+              Manage your Tri
+            </a>
+            .
+          </div>
         </div>
-      )}
+      ) : null}
 
-      {!doc ? null : (
+      {screenState !== 'ready' || !doc ? null : (
         <div style={{ marginTop: 12 }}>
           <div className="card">
             <div style={{ fontSize: 12, opacity: 0.9 }}>
@@ -387,68 +308,70 @@ export default function PublishedScoringClient() {
 
           <h2 style={{ marginTop: 18 }}>Triathlon Totals</h2>
           <div className="card">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th style={{ cursor: 'pointer' }} onClick={() => setTotalsSort(nextSort(totalsSort, 'competitor', 'asc'))}>
-                    Competitor{sortMark(totalsSort.key === 'competitor', totalsSort.dir)}
-                  </th>
-                  <th style={{ width: 90, cursor: 'pointer' }} onClick={() => setTotalsSort(nextSort(totalsSort, 'bowling', 'desc'))}>
-                    Bowling{sortMark(totalsSort.key === 'bowling', totalsSort.dir)}
-                  </th>
-                  <th style={{ width: 90, cursor: 'pointer' }} onClick={() => setTotalsSort(nextSort(totalsSort, 'pool', 'desc'))}>
-                    Pool{sortMark(totalsSort.key === 'pool', totalsSort.dir)}
-                  </th>
-                  <th style={{ width: 90, cursor: 'pointer' }} onClick={() => setTotalsSort(nextSort(totalsSort, 'darts', 'desc'))}>
-                    Darts{sortMark(totalsSort.key === 'darts', totalsSort.dir)}
-                  </th>
-                  <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setTotalsSort(nextSort(totalsSort, 'triathlon', 'desc'))}>
-                    Triathlon{sortMark(totalsSort.key === 'triathlon', totalsSort.dir)}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...orderedParticipants]
-                  .map((p, idx) => ({
-                    p,
-                    idx,
-                    t: doc.totals.byPerson[p.personId]
-                  }))
-                  .map((row, stableIdx) => ({ ...row, stableIdx }))
-                  .sort((a, b) => {
-                    const bowlingA = a.t?.bySubEvent.bowling ?? 0;
-                    const bowlingB = b.t?.bySubEvent.bowling ?? 0;
-                    const poolA = a.t?.bySubEvent.pool ?? 0;
-                    const poolB = b.t?.bySubEvent.pool ?? 0;
-                    const dartsA = a.t?.bySubEvent.darts ?? 0;
-                    const dartsB = b.t?.bySubEvent.darts ?? 0;
-                    const triA = a.t?.triathlon ?? 0;
-                    const triB = b.t?.triathlon ?? 0;
+            <div className="scoringTableWrap">
+              <table className="table scoringTable" style={{ minWidth: 560 }}>
+                <thead>
+                  <tr>
+                    <th style={{ cursor: 'pointer' }} onClick={() => setTotalsSort(nextSort(totalsSort, 'competitor', 'asc'))}>
+                      Competitor{sortMark(totalsSort.key === 'competitor', totalsSort.dir)}
+                    </th>
+                    <th style={{ width: 90, cursor: 'pointer' }} onClick={() => setTotalsSort(nextSort(totalsSort, 'bowling', 'desc'))}>
+                      Bowling{sortMark(totalsSort.key === 'bowling', totalsSort.dir)}
+                    </th>
+                    <th style={{ width: 90, cursor: 'pointer' }} onClick={() => setTotalsSort(nextSort(totalsSort, 'pool', 'desc'))}>
+                      Pool{sortMark(totalsSort.key === 'pool', totalsSort.dir)}
+                    </th>
+                    <th style={{ width: 90, cursor: 'pointer' }} onClick={() => setTotalsSort(nextSort(totalsSort, 'darts', 'desc'))}>
+                      Darts{sortMark(totalsSort.key === 'darts', totalsSort.dir)}
+                    </th>
+                    <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setTotalsSort(nextSort(totalsSort, 'triathlon', 'desc'))}>
+                      Triathlon{sortMark(totalsSort.key === 'triathlon', totalsSort.dir)}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...orderedParticipants]
+                    .map((p, idx) => ({
+                      p,
+                      idx,
+                      t: doc.totals.byPerson[p.personId]
+                    }))
+                    .map((row, stableIdx) => ({ ...row, stableIdx }))
+                    .sort((a, b) => {
+                      const bowlingA = a.t?.bySubEvent.bowling ?? 0;
+                      const bowlingB = b.t?.bySubEvent.bowling ?? 0;
+                      const poolA = a.t?.bySubEvent.pool ?? 0;
+                      const poolB = b.t?.bySubEvent.pool ?? 0;
+                      const dartsA = a.t?.bySubEvent.darts ?? 0;
+                      const dartsB = b.t?.bySubEvent.darts ?? 0;
+                      const triA = a.t?.triathlon ?? 0;
+                      const triB = b.t?.triathlon ?? 0;
 
-                    if (totalsSort.key === 'competitor')
-                      return cmpStr(a.p.displayName, b.p.displayName, totalsSort.dir) || a.stableIdx - b.stableIdx;
-                    if (totalsSort.key === 'bowling')
-                      return cmpNum(bowlingA, bowlingB, totalsSort.dir) || a.stableIdx - b.stableIdx;
-                    if (totalsSort.key === 'pool') return cmpNum(poolA, poolB, totalsSort.dir) || a.stableIdx - b.stableIdx;
-                    if (totalsSort.key === 'darts')
-                      return cmpNum(dartsA, dartsB, totalsSort.dir) || a.stableIdx - b.stableIdx;
-                    if (totalsSort.key === 'triathlon')
-                      return cmpNum(triA, triB, totalsSort.dir) || a.stableIdx - b.stableIdx;
-                    return a.stableIdx - b.stableIdx;
-                  })
-                  .map(({ p, t }) => (
-                    <tr key={p.personId}>
-                      <td>{p.displayName}</td>
-                      <td>{t?.bySubEvent.bowling ?? 0}</td>
-                      <td>{t?.bySubEvent.pool ?? 0}</td>
-                      <td>{t?.bySubEvent.darts ?? 0}</td>
-                      <td>
-                        <b>{t?.triathlon ?? 0}</b>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+                      if (totalsSort.key === 'competitor')
+                        return cmpStr(a.p.displayName, b.p.displayName, totalsSort.dir) || a.stableIdx - b.stableIdx;
+                      if (totalsSort.key === 'bowling')
+                        return cmpNum(bowlingA, bowlingB, totalsSort.dir) || a.stableIdx - b.stableIdx;
+                      if (totalsSort.key === 'pool') return cmpNum(poolA, poolB, totalsSort.dir) || a.stableIdx - b.stableIdx;
+                      if (totalsSort.key === 'darts')
+                        return cmpNum(dartsA, dartsB, totalsSort.dir) || a.stableIdx - b.stableIdx;
+                      if (totalsSort.key === 'triathlon')
+                        return cmpNum(triA, triB, totalsSort.dir) || a.stableIdx - b.stableIdx;
+                      return a.stableIdx - b.stableIdx;
+                    })
+                    .map(({ p, t }) => (
+                      <tr key={p.personId}>
+                        <td>{p.displayName}</td>
+                        <td>{t?.bySubEvent.bowling ?? 0}</td>
+                        <td>{t?.bySubEvent.pool ?? 0}</td>
+                        <td>{t?.bySubEvent.darts ?? 0}</td>
+                        <td>
+                          <b>{t?.triathlon ?? 0}</b>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {doc.subEvents.map((se) => (

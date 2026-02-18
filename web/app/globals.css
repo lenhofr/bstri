@@ -492,6 +492,36 @@ ul.bullets {
 
 .table td { color: rgba(255, 255, 255, 0.78); }
 
+.scoringTableWrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 700px) {
+  .scoringTable {
+    font-size: 12px;
+  }
+
+  .scoringTable th,
+  .scoringTable td {
+    padding: 6px 8px;
+    white-space: nowrap;
+  }
+
+  .scoringTable th:first-child,
+  .scoringTable td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: rgba(11, 11, 11, 0.95);
+  }
+
+  .scoringTable th:first-child {
+    z-index: 2;
+  }
+}
+
 .resultsTags {
   display: flex;
   flex-wrap: wrap;
