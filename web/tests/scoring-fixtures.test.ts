@@ -151,6 +151,29 @@ test('pool: byes count as wins (but still no places/points until all scheduled m
   }
 });
 
+test('pool: with no schedule and no matches, do not compute places (prevents stale leader)', async () => {
+  const { createEmptyScoringDocumentV1 } = await import('../lib/scoring-model');
+
+  const doc = createEmptyScoringDocumentV1({
+    eventId: 'fixture-pool-no-data',
+    year: 2026,
+    status: 'draft',
+    participants: [{ personId: 'a', displayName: 'Alpha' }]
+  });
+
+  const next1 = recomputeDocumentDerivedFields({ doc, pointsSchedule: POINTS_SCHEDULE });
+  assert.equal(getGame(next1, 'pool-1').results.a.place, null);
+
+  // When another competitor is added but there is still no pool schedule and no matches,
+  // we should not show a computed leader.
+  doc.participants.push({ personId: 'b', displayName: 'Bravo' });
+  const next2 = recomputeDocumentDerivedFields({ doc, pointsSchedule: POINTS_SCHEDULE });
+  const game8 = getGame(next2, 'pool-1');
+
+  assert.equal(game8.results.a.place, null);
+  assert.equal(game8.results.b.place, null);
+});
+
 test('finalize: points are only awarded once a game is marked complete', async () => {
   const { createEmptyScoringDocumentV1 } = await import('../lib/scoring-model');
 
