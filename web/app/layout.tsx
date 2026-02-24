@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Inter, Permanent_Marker } from 'next/font/google';
 
 import './globals.css';
+import { PwaUpdatePrompt } from './_components/PwaUpdatePrompt';
 import { TopNav } from './_components/TopNav';
 
 const bodyFont = Inter({ subsets: ['latin'], variable: '--font-body' });
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={`${bodyFont.variable} ${headingFont.variable}`}>
+        <PwaUpdatePrompt />
         <TopNav />
         <div className="shell">
           <div className="frame">
