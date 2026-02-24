@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 import { Inter, Permanent_Marker } from 'next/font/google';
 
@@ -10,7 +10,19 @@ const headingFont = Permanent_Marker({ subsets: ['latin'], weight: '400', variab
 
 export const metadata: Metadata = {
   title: 'Bar Sports Triathlon',
-  description: 'Bowling, pool, darts (and beer).'
+  description: 'Bowling, pool, darts (and beer).',
+  manifest: '/manifest.webmanifest',
+  icons: {
+    icon: [
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' }
+    ],
+    apple: '/apple-touch-icon.png'
+  }
+};
+
+export const viewport: Viewport = {
+  themeColor: '#1f2b21'
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
