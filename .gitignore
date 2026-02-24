@@ -11,6 +11,9 @@ dist/
 
 # Next.js static export output
 web/out/
+web/public/sw.js
+web/public/workbox-*.js
+web/public/fallback-*.js
 
 # local visual review artifacts (don’t commit)
 home.jpeg
