@@ -1,7 +1,7 @@
 # OpenSpec Feature: PWA Optimization
 
 ## Status
-Approved
+Completed
 
 ## Summary
 Implement Progressive Web App capabilities for the Next.js static site so users can install it, load key routes quickly, and keep core content usable with limited or no network connectivity.
@@ -55,6 +55,11 @@ Implement Progressive Web App capabilities for the Next.js static site so users 
   - Android Chrome (install prompt and launch)
   - iOS Safari (Add to Home Screen behavior)
 
+## Completion Notes
+- Implemented in three merged phases: manifest/icons, service worker + offline fallback, then runtime cache policy + update prompt.
+- Production now serves `manifest.webmanifest` and `sw.js` with the configured `/scoring` start route and caching behavior.
+- Manual Android/iOS install/offline/update checks were completed and accepted.
+
 ## Approved Decisions
 1. **Service worker approach:** start with `next-pwa` (Workbox-backed) to reduce custom SW maintenance risk.
 2. **Default launch route:** manifest `start_url` is `/scoring`.
@@ -76,4 +81,4 @@ Implement Progressive Web App capabilities for the Next.js static site so users 
 - App is installable from supported browsers.
 - Offline navigation to previously visited core pages works with fallback for misses.
 - No stale admin write behavior introduced by caching.
-- Lighthouse PWA category has no critical installability failures.
+- Lighthouse installability-related checks show no critical failures.
