@@ -627,7 +627,9 @@ ul.bullets {
   cursor: pointer;
   user-select: none;
   list-style: none;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .scoringTotalsToggle::-webkit-details-marker {
@@ -637,6 +639,19 @@ ul.bullets {
 .scoringTotalsToggle h2 {
   margin: 0;
   display: inline;
+}
+
+.scoringTotalsToggle::before {
+  content: '▾';
+  font-size: 20px;
+  opacity: 0.6;
+  display: inline-block;
+  transform: rotate(-90deg);
+  transition: transform 0.18s ease;
+}
+
+details[open] > .scoringTotalsToggle::before {
+  transform: rotate(0deg);
 }
 
 .scoringGame {
@@ -651,6 +666,9 @@ ul.bullets {
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(0, 0, 0, 0.16);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .scoringGame > summary::-webkit-details-marker {
@@ -659,6 +677,20 @@ ul.bullets {
 
 .scoringGame > summary h4 {
   margin: 0;
+  flex: 1;
+}
+
+.scoringGame > summary::after {
+  content: '▾';
+  font-size: 16px;
+  opacity: 0.55;
+  display: inline-block;
+  transform: rotate(-90deg);
+  transition: transform 0.18s ease;
+}
+
+.scoringGame[open] > summary::after {
+  transform: rotate(0deg);
 }
 
 .scoringGame[open] > summary {
