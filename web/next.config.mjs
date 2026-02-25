@@ -12,7 +12,7 @@ const runtimeCaching = [
       networkTimeoutSeconds: 5,
       expiration: {
         maxEntries: 16,
-        maxAgeSeconds: 24 * 60 * 60
+        maxAgeSeconds: 2 * 60
       }
     }
   },
@@ -29,7 +29,7 @@ const runtimeCaching = [
       networkTimeoutSeconds: 10,
       expiration: {
         maxEntries: 32,
-        maxAgeSeconds: 24 * 60 * 60
+        maxAgeSeconds: 2 * 60
       }
     }
   },
@@ -95,7 +95,7 @@ const withPWA = require('next-pwa')({
   dest: 'public',
   disable: process.env.NODE_ENV === 'development',
   register: false,
-  skipWaiting: false,
+  skipWaiting: true,
   buildExcludes: [/app-build-manifest\.json$/],
   runtimeCaching,
   fallbacks: {
