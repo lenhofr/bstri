@@ -123,8 +123,11 @@ function GameTable(props: {
     });
 
   return (
-    <div className="card" style={{ marginTop: 10 }}>
-      <h4 style={{ margin: '0 0 8px' }}>{game.label}</h4>
+    <details className="scoringGame">
+      <summary>
+        <h4>{game.label}</h4>
+      </summary>
+      <div className="card">
       <div className="scoringDesktopOnly">
         <div className="scoringTableWrap">
           <table className="table scoringTable" style={{ minWidth: showAttempts ? 760 : 520 }}>
@@ -222,7 +225,8 @@ function GameTable(props: {
           );
         })}
       </div>
-    </div>
+      </div>
+    </details>
   );
 }
 
@@ -399,8 +403,9 @@ export default function PublishedScoringClient() {
             </div>
           </div>
 
-          <h2 style={{ marginTop: 18 }}>Triathlon Totals</h2>
-          <div className="card">
+          <details open style={{ marginTop: 18 }}>
+          <summary className="scoringTotalsToggle"><h2>Current Standings</h2></summary>
+          <div className="card" style={{ marginTop: 10 }}>
             <div className="scoringDesktopOnly">
               <div className="scoringTableWrap">
                 <table className="table scoringTable" style={{ minWidth: 560 }}>
@@ -465,6 +470,7 @@ export default function PublishedScoringClient() {
               ))}
             </div>
           </div>
+          </details>
 
           <div className="scoringMobileTabs" role="tablist" aria-label="Scoring sub-events">
             {doc.subEvents.map((se) => (

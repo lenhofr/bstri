@@ -270,6 +270,7 @@ a:hover { text-decoration: underline; }
 
 .panelTitle {
   margin: 0 0 14px;
+  padding-right: 145px;
   font-family: var(--font-heading), var(--font-body), system-ui;
   font-size: 34px;
   font-weight: 400;
@@ -620,6 +621,56 @@ ul.bullets {
     color: rgba(255, 255, 255, 0.95);
     font-weight: 750;
   }
+}
+
+.scoringTotalsToggle {
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  display: inline-block;
+}
+
+.scoringTotalsToggle::-webkit-details-marker {
+  display: none;
+}
+
+.scoringTotalsToggle h2 {
+  margin: 0;
+  display: inline;
+}
+
+.scoringGame {
+  margin-top: 10px;
+}
+
+.scoringGame > summary {
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.scoringGame > summary::-webkit-details-marker {
+  display: none;
+}
+
+.scoringGame > summary h4 {
+  margin: 0;
+}
+
+.scoringGame[open] > summary {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-color: transparent;
+}
+
+.scoringGame[open] > .card {
+  margin-top: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 
 .resultsTags {
