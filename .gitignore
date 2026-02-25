@@ -21,3 +21,10 @@ pastresults_old.jpeg
 pastresults_young.jpeg
 payouts.jpeg
 rules.jpeg
+
+# raw source assets (processed outputs are committed instead)
+docs/raw_images/
+
+# local tooling artifacts
+.claude/
+.playwright-mcp/

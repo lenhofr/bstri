@@ -105,7 +105,33 @@ const withPWA = require('next-pwa')({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
-  images: { unoptimized: true }
+  images: { unoptimized: true },
 };
 
-export default withPWA(nextConfig);
+// Apply withPWA first, then layer SVGR on top — next-pwa v5 swallows webpack
+// functions defined in nextConfig, so we patch the resulting config instead.
+const pwaConfig = withPWA(nextConfig);
+const pwaWebpack = pwaConfig.webpack;
+pwaConfig.webpack = (config, options) => {
+  const result = pwaWebpack ? pwaWebpack(config, options) : config;
+
+  // Exclude .svg from Next.js's default file-loader rule
+  const fileLoaderRule = result.module.rules.find(rule =>
+    rule.test?.test?.('.svg')
+  );
+  if (fileLoaderRule) {
+    fileLoaderRule.exclude = /\.svg$/i;
+  }
+
+  // Handle .svg imports as React components via SVGR.
+  // type: 'javascript/auto' overrides Next.js's asset/resource rule for SVGs.
+  result.module.rules.push({
+    test: /\.svg$/i,
+    type: 'javascript/auto',
+    use: ['@svgr/webpack'],
+  });
+
+  return result;
+};
+
+export default pwaConfig;
