@@ -281,6 +281,7 @@ export default function PublishedScoringClient() {
   const [sortByGame, setSortByGame] = useState<Record<string, SortSpec>>({});
   const [totalsSort, setTotalsSort] = useState<SortSpec>({ key: 'triathlon', dir: 'desc' });
   const [mobileSubEvent, setMobileSubEvent] = useState<SubEventId>('bowling');
+  const [showAllStandings, setShowAllStandings] = useState(false);
 
   useEffect(() => {
     if (!doc?.subEvents?.length) return;
@@ -429,7 +430,7 @@ export default function PublishedScoringClient() {
                     </tr>
                   </thead>
                   <tbody>
-                    {totalsRows.map(({ p, t }) => (
+                    {(showAllStandings ? totalsRows : totalsRows.slice(0, 5)).map(({ p, t }) => (
                       <tr key={p.personId}>
                         <td>{p.displayName}</td>
                         <td>{t?.bySubEvent.bowling ?? 0}</td>
@@ -446,7 +447,7 @@ export default function PublishedScoringClient() {
             </div>
 
             <div className="scoringMobileOnly scoringTotalsCards">
-              {totalsRows.map(({ p, t }) => (
+              {(showAllStandings ? totalsRows : totalsRows.slice(0, 5)).map(({ p, t }) => (
                 <div key={p.personId} className="scoringTotalsCard">
                   <div className="scoringGameCardHeader">
                     <div className="scoringGameName">{p.displayName}</div>
@@ -469,6 +470,16 @@ export default function PublishedScoringClient() {
                 </div>
               ))}
             </div>
+
+            {totalsRows.length > 5 && (
+              <button
+                type="button"
+                onClick={() => setShowAllStandings((v) => !v)}
+                style={{ marginTop: 10, width: '100%', fontSize: 13 }}
+              >
+                {showAllStandings ? 'Show less' : `Show all ${totalsRows.length} competitors`}
+              </button>
+            )}
           </div>
           </details>
 

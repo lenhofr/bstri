@@ -641,7 +641,7 @@ ul.bullets {
   display: inline;
 }
 
-.scoringTotalsToggle::after {
+.scoringTotalsToggle::before {
   content: '▾';
   font-size: 20px;
   opacity: 0.6;
@@ -650,7 +650,7 @@ ul.bullets {
   transition: transform 0.18s ease;
 }
 
-details[open] > .scoringTotalsToggle::after {
+details[open] > .scoringTotalsToggle::before {
   transform: rotate(0deg);
 }
 
