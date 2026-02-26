@@ -39,10 +39,9 @@ function formatPublishedAtShort(timestamp: string | null): string | null {
   if (!timestamp) return null;
   const ms = Date.parse(timestamp);
   if (!Number.isFinite(ms)) return null;
-  const time = new Intl.DateTimeFormat('en-US', { timeZone: ET, hour: 'numeric', minute: '2-digit' }).format(ms);
-  if (etDateKey(ms) === etDateKey(Date.now())) return `today ${time}`;
-  const date = new Intl.DateTimeFormat('en-US', { timeZone: ET, month: 'numeric', day: 'numeric', year: 'numeric' }).format(ms);
-  return `${date} ${time}`;
+  if (etDateKey(ms) === etDateKey(Date.now()))
+    return new Intl.DateTimeFormat('en-US', { timeZone: ET, hour: 'numeric', minute: '2-digit' }).format(ms);
+  return new Intl.DateTimeFormat('en-US', { timeZone: ET, month: 'numeric', day: 'numeric', year: 'numeric' }).format(ms);
 }
 
 type SortDir = 'asc' | 'desc';
@@ -399,7 +398,7 @@ export default function PublishedScoringClient() {
               Current Standings
               {doc.publishedAt && formatPublishedAtShort(doc.publishedAt) ? (
                 <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 13, opacity: 0.6, marginLeft: 10 }}>
-                  · updated {formatPublishedAtShort(doc.publishedAt)}
+                  · {formatPublishedAtShort(doc.publishedAt)}
                 </span>
               ) : null}
             </h2>
