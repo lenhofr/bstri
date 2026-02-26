@@ -30,19 +30,18 @@ function loadPublishedDoc(key: string): ScoringDocumentV1 | null {
   }
 }
 
-function formatPublishedAt(timestamp: string | null): string | null {
+
+const ET = 'America/New_York';
+const etDateKey = (ms: number) =>
+  new Intl.DateTimeFormat('en-US', { timeZone: ET, year: 'numeric', month: '2-digit', day: '2-digit' }).format(ms);
+
+function formatPublishedAtShort(timestamp: string | null): string | null {
   if (!timestamp) return null;
   const ms = Date.parse(timestamp);
-  if (!Number.isFinite(ms)) return timestamp;
-  return new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York',
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZoneName: 'short'
-  }).format(new Date(ms));
+  if (!Number.isFinite(ms)) return null;
+  if (etDateKey(ms) === etDateKey(Date.now()))
+    return new Intl.DateTimeFormat('en-US', { timeZone: ET, hour: 'numeric', minute: '2-digit' }).format(ms);
+  return new Intl.DateTimeFormat('en-US', { timeZone: ET, month: 'numeric', day: 'numeric', year: 'numeric' }).format(ms);
 }
 
 type SortDir = 'asc' | 'desc';
@@ -393,19 +392,17 @@ export default function PublishedScoringClient() {
 
       {screenState !== 'ready' || !doc ? null : (
         <div style={{ marginTop: 12 }}>
-          <div className="card">
-            <div style={{ fontSize: 12, opacity: 0.9 }}>
-              Published
-              {doc.publishedAt ? (
-                <>
-                  : <b>{formatPublishedAt(doc.publishedAt)}</b>
-                </>
+          <details open style={{ marginTop: 6 }}>
+          <summary className="scoringTotalsToggle">
+            <h2>
+              Current Standings
+              {doc.publishedAt && formatPublishedAtShort(doc.publishedAt) ? (
+                <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 13, opacity: 0.6, marginLeft: 10 }}>
+                  · {formatPublishedAtShort(doc.publishedAt)}
+                </span>
               ) : null}
-            </div>
-          </div>
-
-          <details open style={{ marginTop: 18 }}>
-          <summary className="scoringTotalsToggle"><h2>Current Standings</h2></summary>
+            </h2>
+          </summary>
           <div className="card" style={{ marginTop: 10 }}>
             <div className="scoringDesktopOnly">
               <div className="scoringTableWrap">
@@ -508,14 +505,6 @@ export default function PublishedScoringClient() {
             />
           ))}
 
-          <details style={{ marginTop: 18 }}>
-            <summary>Raw JSON (published doc)</summary>
-            <div className="card" style={{ overflowX: 'auto', marginTop: 8 }}>
-              <pre suppressHydrationWarning style={{ margin: 0, fontSize: 12 }}>
-                {JSON.stringify(doc, null, 2)}
-              </pre>
-            </div>
-          </details>
         </div>
       )}
     </div>
