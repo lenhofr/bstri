@@ -48,7 +48,7 @@ export default function ActionsBar() {
       ) : null}
 
       <div className="card" style={{ display: 'grid', gap: 8, marginTop: 10 }}>
-      <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+      <div className="adminActionBar" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={badgeStyle()}>
             Event <code>{eventId}</code>
@@ -67,7 +67,7 @@ export default function ActionsBar() {
           </span>
         </div>
 
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div className="adminButtons" style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {backend ? <button onClick={() => logout()}>Logout</button> : null}
           <button
             disabled={saveDisabled}

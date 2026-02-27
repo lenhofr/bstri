@@ -21,7 +21,7 @@ export default function AdminScoringTabs() {
   return (
     <nav
       aria-label="Admin scoring sections"
-      style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', margin: '10px 0 16px' }}
+      style={{ margin: '10px 0 16px' }}
     >
       <div className="tabs">
         {tabs.map((t) => {
@@ -38,14 +38,6 @@ export default function AdminScoringTabs() {
             </Link>
           );
         })}
-      </div>
-
-      <div style={{ marginLeft: 'auto' }}>
-        <div className="tabs">
-          <Link href="/scoring" className="tab">
-            View published
-          </Link>
-        </div>
       </div>
     </nav>
   );

@@ -87,8 +87,8 @@ export default function DartsScoringClient() {
 
         return (
           <section key={g.gameId} style={{ marginTop: 12 }}>
-            <h3 style={{ margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span>
+            <h3 className="gameHeading" style={{ margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span className="gameLabel">
                 {g.label} <span style={{ fontSize: 12, opacity: 0.8 }}>({finalized ? 'complete' : 'not complete'})</span>
               </span>
               <button
@@ -105,16 +105,17 @@ export default function DartsScoringClient() {
               </p>
             )}
             <div className="card">
+              <div className="tableScroll">
               <table className="table">
                 <thead>
                   <tr>
                     <th style={{ cursor: 'pointer' }} onClick={() => setSortByGame((p) => ({ ...p, [g.gameId]: nextSort(p[g.gameId], 'competitor') }))}>
                       Competitor{sortMark(sort.key === 'competitor', sort.dir)}
                     </th>
-                    <th style={{ width: 140, cursor: 'pointer' }} onClick={() => setSortByGame((p) => ({ ...p, [g.gameId]: nextSort(p[g.gameId], 'place') }))}>
+                    <th className="colInput" style={{ cursor: 'pointer' }} onClick={() => setSortByGame((p) => ({ ...p, [g.gameId]: nextSort(p[g.gameId], 'place') }))}>
                       Place{sortMark(sort.key === 'place', sort.dir)}
                     </th>
-                    <th style={{ width: 90, cursor: 'pointer' }} onClick={() => setSortByGame((p) => ({ ...p, [g.gameId]: nextSort(p[g.gameId], 'points') }))}>
+                    <th className="colPoints" style={{ cursor: 'pointer' }} onClick={() => setSortByGame((p) => ({ ...p, [g.gameId]: nextSort(p[g.gameId], 'points') }))}>
                       Points{sortMark(sort.key === 'points', sort.dir)}
                     </th>
                   </tr>
@@ -125,7 +126,7 @@ export default function DartsScoringClient() {
                     return (
                       <tr key={p.personId}>
                         <td>{p.displayName}</td>
-                        <td>
+                        <td className="colInput">
                           <input
                             type="number"
                             value={r.place ?? ''}
@@ -135,12 +136,13 @@ export default function DartsScoringClient() {
                             style={{ ...placeStyle(r.place), ...(isDup ? { border: '2px solid #b00020' } : {}) }}
                           />
                         </td>
-                        <td>{r.points ?? '-'}</td>
+                        <td className="colPoints">{r.points ?? '-'}</td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
+              </div>
             </div>
           </section>
         );
