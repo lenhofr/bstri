@@ -120,6 +120,10 @@ export type ScoringDocumentV1 = {
 
   // If missing (legacy docs), all games are treated as finalized.
   finalizedGames?: Partial<Record<GameId, boolean>>;
+
+  // Free-text notes written by the admin during a live event.
+  // Absent on legacy docs; treated as null (no commentary).
+  commentary?: string | null;
 };
 
 export function createEmptyScoringDocumentV1(params: {
@@ -182,6 +186,7 @@ export function createEmptyScoringDocumentV1(params: {
       }
     ],
     totals: { byPerson },
-    finalizedGames: {}
+    finalizedGames: {},
+    commentary: null
   };
 }

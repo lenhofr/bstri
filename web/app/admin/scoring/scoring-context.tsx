@@ -83,6 +83,7 @@ type ScoringCtx = {
   setPlace: (gameId: string, personId: string, place: number | null) => void;
   setAttempts: (gameId: string, personId: string, attempts: number[] | null) => void;
   setGameFinalized: (gameId: string, finalized: boolean) => void;
+  setCommentary: (commentary: string | null) => void;
 };
 
 const Ctx = createContext<ScoringCtx | null>(null);
@@ -403,6 +404,10 @@ export function ScoringProvider(props: { children: React.ReactNode }) {
     setDoc(next);
   }
 
+  function setCommentary(commentary: string | null) {
+    setDoc((prev) => ({ ...prev, commentary: commentary || null }));
+  }
+
   function setGameFinalized(gameId: string, finalized: boolean) {
     setDoc((prev) => {
       const allGameIds = Object.values(CANONICAL_GAME_IDS).flat();
@@ -458,7 +463,8 @@ export function ScoringProvider(props: { children: React.ReactNode }) {
         setRaw,
         setPlace,
         setAttempts,
-        setGameFinalized
+        setGameFinalized,
+        setCommentary
       }}
     >
       {props.children}

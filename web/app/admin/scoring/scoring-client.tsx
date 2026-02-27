@@ -25,6 +25,7 @@ export default function AdminScoringClient() {
     deleteParticipant,
     setEventMeta,
     setPoolMatches,
+    setCommentary,
     setFlash
   } = useScoring();
 
@@ -487,6 +488,18 @@ export default function AdminScoringClient() {
           </tbody>
         </table>
       </div>
+
+      <h3 style={{ marginTop: 18 }}>Commentary</h3>
+      <p className="kicker" style={{ marginTop: 6 }}>
+        Notable moments from the event — shown at the bottom of the public scoring page.
+      </p>
+      <textarea
+        value={doc.commentary ?? ''}
+        onChange={(e) => setCommentary(e.target.value)}
+        placeholder="e.g. Rob bowled a 300 in Game 2. Jake sank the 8 ball on the break."
+        rows={5}
+        style={{ width: '100%', resize: 'vertical' }}
+      />
 
       <details style={{ marginTop: 18 }}>
         <summary>Advanced</summary>
