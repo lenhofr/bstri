@@ -826,3 +826,53 @@ details[open] > .scoringTotalsToggle::before {
   height: 26px;
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25));
 }
+
+.tableScroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.iconBtn {
+  padding: 3px 7px;
+  font-size: 16px;
+  line-height: 1;
+  min-width: 0;
+}
+
+.adminScoringPanel .panelTitle { padding-right: 0; }
+
+.colInput { width: 90px; }
+
+.colInput input { width: 100%; }
+
+.colPoints { width: 70px; }
+
+.matchupCards { display: none; }
+
+@media (max-width: 600px) {
+  .adminScoringPanel .panelTitle {
+    font-size: 22px;
+    padding-right: 0;
+  }
+
+  .adminActionBar { flex-direction: column; gap: 8px; }
+
+  .adminActionBar .adminButtons { margin-left: 0; }
+
+  .adminButtons { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .adminButtons button { flex: 1; min-width: 120px; }
+
+  .colInput { width: 80px; }
+
+  .colPoints { width: 65px; }
+
+  .matchupCards { display: flex; flex-direction: column; gap: 10px; }
+
+  .matchupTable { display: none; }
+
+  .gameHeading { flex-wrap: wrap; row-gap: 6px; }
+
+  .gameHeading .gameLabel { flex: 1 1 100%; }
+}

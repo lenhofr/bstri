@@ -406,14 +406,15 @@ export default function AdminScoringClient() {
 
       {participants.length > 0 && (
         <div className="card" style={{ marginTop: 10 }}>
+          <div className="tableScroll">
           <table className="table">
             <thead>
               <tr>
                 <th style={{ width: 60 }}>#</th>
                 <th>personId</th>
                 <th>displayName</th>
-                <th style={{ width: 140 }}>Order</th>
-                <th style={{ width: 110 }} />
+                <th style={{ width: 80 }}>Order</th>
+                <th style={{ width: 48 }} />
               </tr>
             </thead>
             <tbody>
@@ -430,15 +431,17 @@ export default function AdminScoringClient() {
                     />
                   </td>
                   <td>
-                    <button onClick={() => moveInOrder(p.personId, -1)} disabled={idx === 0}>
-                      Up
+                    <button className="iconBtn" aria-label="Move up" onClick={() => moveInOrder(p.personId, -1)} disabled={idx === 0}>
+                      ↑
                     </button>{' '}
-                    <button onClick={() => moveInOrder(p.personId, 1)} disabled={idx === competitorOrder.length - 1}>
-                      Down
+                    <button className="iconBtn" aria-label="Move down" onClick={() => moveInOrder(p.personId, 1)} disabled={idx === competitorOrder.length - 1}>
+                      ↓
                     </button>
                   </td>
                   <td>
                     <button
+                      className="iconBtn"
+                      aria-label={`Delete ${p.displayName}`}
                       onClick={() => {
                         if (
                           confirm(
@@ -450,18 +453,20 @@ export default function AdminScoringClient() {
                         }
                       }}
                     >
-                      Delete
+                      ×
                     </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
       <h3 style={{ marginTop: 18 }}>Totals Preview</h3>
       <div className="card">
+        <div className="tableScroll">
         <table className="table">
           <thead>
             <tr>
@@ -487,6 +492,7 @@ export default function AdminScoringClient() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       <h3 style={{ marginTop: 18 }}>Commentary</h3>

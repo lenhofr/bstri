@@ -172,7 +172,7 @@ export default function PoolScoringClient() {
               <tr>
                 <th style={{ width: 60 }}>#</th>
                 <th>Competitor</th>
-                <th style={{ width: 140 }} />
+                <th style={{ width: 80 }} />
               </tr>
             </thead>
             <tbody>
@@ -181,11 +181,11 @@ export default function PoolScoringClient() {
                   <td>{idx + 1}</td>
                   <td>{displayName(pid)}</td>
                   <td>
-                    <button onClick={() => moveInOrder(pid, -1)} disabled={idx === 0}>
-                      Up
+                    <button className="iconBtn" aria-label="Move up" onClick={() => moveInOrder(pid, -1)} disabled={idx === 0}>
+                      ↑
                     </button>{' '}
-                    <button onClick={() => moveInOrder(pid, 1)} disabled={idx === competitorOrder.length - 1}>
-                      Down
+                    <button className="iconBtn" aria-label="Move down" onClick={() => moveInOrder(pid, 1)} disabled={idx === competitorOrder.length - 1}>
+                      ↓
                     </button>
                   </td>
                 </tr>
@@ -213,136 +213,201 @@ export default function PoolScoringClient() {
       {rounds.length === 0 ? (
         <div className="card">Generate the schedule to start entering match winners.</div>
       ) : (
-        rounds.map((r) => (
-          <section key={r.round} style={{ marginTop: 12 }}>
-            <h4 style={{ margin: '0 0 6px' }}>Round {r.round}</h4>
-            <div className="card">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th
-                      style={{ width: 90, cursor: 'pointer' }}
-                      onClick={() => setMatchSort((p) => nextSort(p, 'table', 'asc'))}
-                    >
-                      Table{sortMark(matchSort.key === 'table', matchSort.dir)}
-                    </th>
-                    <th style={{ cursor: 'pointer' }} onClick={() => setMatchSort((p) => nextSort(p, 'match', 'asc'))}>
-                      Match{sortMark(matchSort.key === 'match', matchSort.dir)}
-                    </th>
-                    <th style={{ width: 220 }}>8-ball winner</th>
-                    <th style={{ width: 220 }}>9-ball winner</th>
-                    <th
-                      style={{ width: 120, cursor: 'pointer' }}
-                      onClick={() => setMatchSort((p) => nextSort(p, 'status', 'asc'))}
-                    >
-                      Status{sortMark(matchSort.key === 'status', matchSort.dir)}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(() => {
-                    const sortedMatches = r.matches
-                      .map((m, idx) => ({ m, idx }))
-                      .sort((a, b) => {
-                        const keyA = matchKey({ round: r.round, a: a.m.a, b: a.m.b });
-                        const keyB = matchKey({ round: r.round, a: b.m.a, b: b.m.b });
-                        const existingA = doc.poolMatches.find((x) => x.round === r.round && x.a === a.m.a && x.b === a.m.b);
-                        const existingB = doc.poolMatches.find((x) => x.round === r.round && x.a === b.m.a && x.b === b.m.b);
-                        const curA = partial[keyA] ?? { w8: existingA?.winner8Ball ?? null, w9: existingA?.winner9Ball ?? null };
-                        const curB = partial[keyB] ?? { w8: existingB?.winner8Ball ?? null, w9: existingB?.winner9Ball ?? null };
-                        const doneA = curA.w8 && curA.w9 ? 1 : 0;
-                        const doneB = curB.w8 && curB.w9 ? 1 : 0;
+        rounds.map((r) => {
+          const sortedMatches = r.matches
+            .map((m, idx) => ({ m, idx }))
+            .sort((a, b) => {
+              const keyA = matchKey({ round: r.round, a: a.m.a, b: a.m.b });
+              const keyB = matchKey({ round: r.round, a: b.m.a, b: b.m.b });
+              const existingA = doc.poolMatches.find((x) => x.round === r.round && x.a === a.m.a && x.b === a.m.b);
+              const existingB = doc.poolMatches.find((x) => x.round === r.round && x.a === b.m.a && x.b === b.m.b);
+              const curA = partial[keyA] ?? { w8: existingA?.winner8Ball ?? null, w9: existingA?.winner9Ball ?? null };
+              const curB = partial[keyB] ?? { w8: existingB?.winner8Ball ?? null, w9: existingB?.winner9Ball ?? null };
+              const doneA = curA.w8 && curA.w9 ? 1 : 0;
+              const doneB = curB.w8 && curB.w9 ? 1 : 0;
 
-                        if (matchSort.key === 'table') return cmpNum(a.m.table, b.m.table, matchSort.dir) || a.idx - b.idx;
-                        if (matchSort.key === 'status') return cmpNum(doneA, doneB, matchSort.dir) || a.idx - b.idx;
+              if (matchSort.key === 'table') return cmpNum(a.m.table, b.m.table, matchSort.dir) || a.idx - b.idx;
+              if (matchSort.key === 'status') return cmpNum(doneA, doneB, matchSort.dir) || a.idx - b.idx;
 
-                        const labelA = `${displayName(a.m.a)} vs ${displayName(a.m.b)}`;
-                        const labelB = `${displayName(b.m.a)} vs ${displayName(b.m.b)}`;
-                        return cmpStr(labelA, labelB, matchSort.dir) || a.idx - b.idx;
-                      });
+              const labelA = `${displayName(a.m.a)} vs ${displayName(a.m.b)}`;
+              const labelB = `${displayName(b.m.a)} vs ${displayName(b.m.b)}`;
+              return cmpStr(labelA, labelB, matchSort.dir) || a.idx - b.idx;
+            });
+
+          return (
+            <section key={r.round} style={{ marginTop: 12 }}>
+              <h4 style={{ margin: '0 0 6px' }}>Round {r.round}</h4>
+              <div className="card">
+                {/* Desktop table */}
+                <div className="matchupTable">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th
+                          style={{ width: 90, cursor: 'pointer' }}
+                          onClick={() => setMatchSort((p) => nextSort(p, 'table', 'asc'))}
+                        >
+                          Table{sortMark(matchSort.key === 'table', matchSort.dir)}
+                        </th>
+                        <th style={{ cursor: 'pointer' }} onClick={() => setMatchSort((p) => nextSort(p, 'match', 'asc'))}>
+                          Match{sortMark(matchSort.key === 'match', matchSort.dir)}
+                        </th>
+                        <th style={{ width: 220 }}>8-ball winner</th>
+                        <th style={{ width: 220 }}>9-ball winner</th>
+                        <th
+                          style={{ width: 120, cursor: 'pointer' }}
+                          onClick={() => setMatchSort((p) => nextSort(p, 'status', 'asc'))}
+                        >
+                          Status{sortMark(matchSort.key === 'status', matchSort.dir)}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedMatches.map(({ m }) => {
+                        const key = matchKey({ round: r.round, a: m.a, b: m.b });
+                        const existing = doc.poolMatches.find((x) => x.round === r.round && x.a === m.a && x.b === m.b);
+                        const cur = partial[key] ?? { w8: existing?.winner8Ball ?? null, w9: existing?.winner9Ball ?? null };
+                        const done = !!(cur.w8 && cur.w9);
+
+                        return (
+                          <tr key={key}>
+                            <td>{m.table}</td>
+                            <td>
+                              {displayName(m.a)} vs {displayName(m.b)}
+                            </td>
+                            <td>
+                              <select
+                                value={cur.w8 ?? ''}
+                                onChange={(e) =>
+                                  setWinner({
+                                    round: r.round,
+                                    a: m.a,
+                                    b: m.b,
+                                    table: m.table,
+                                    which: 'w8',
+                                    winner: e.target.value === '' ? null : e.target.value
+                                  })
+                                }
+                              >
+                                <option value="">—</option>
+                                <option value={m.a}>{displayName(m.a)}</option>
+                                <option value={m.b}>{displayName(m.b)}</option>
+                              </select>
+                            </td>
+                            <td>
+                              <select
+                                value={cur.w9 ?? ''}
+                                onChange={(e) =>
+                                  setWinner({
+                                    round: r.round,
+                                    a: m.a,
+                                    b: m.b,
+                                    table: m.table,
+                                    which: 'w9',
+                                    winner: e.target.value === '' ? null : e.target.value
+                                  })
+                                }
+                              >
+                                <option value="">—</option>
+                                <option value={m.a}>{displayName(m.a)}</option>
+                                <option value={m.b}>{displayName(m.b)}</option>
+                              </select>
+                            </td>
+                            <td>{done ? 'Complete' : 'Incomplete'}</td>
+                          </tr>
+                        );
+                      })}
+
+                      {r.bye && (
+                        <tr key={`bye:${r.round}:${r.bye}`}>
+                          <td>Bye</td>
+                          <td>{displayName(r.bye)} (bye)</td>
+                          <td>
+                            <select value={r.bye} disabled>
+                              <option value={r.bye}>{displayName(r.bye)}</option>
+                            </select>
+                          </td>
+                          <td>
+                            <select value={r.bye} disabled>
+                              <option value={r.bye}>{displayName(r.bye)}</option>
+                            </select>
+                          </td>
+                          <td>Complete</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile cards */}
+                <div className="matchupCards">
+                  {sortedMatches.map(({ m }) => {
+                    const key = matchKey({ round: r.round, a: m.a, b: m.b });
+                    const existing = doc.poolMatches.find((x) => x.round === r.round && x.a === m.a && x.b === m.b);
+                    const cur = partial[key] ?? { w8: existing?.winner8Ball ?? null, w9: existing?.winner9Ball ?? null };
 
                     return (
-                      <>
-                        {sortedMatches.map(({ m }) => {
-                          const key = matchKey({ round: r.round, a: m.a, b: m.b });
-                          const existing = doc.poolMatches.find((x) => x.round === r.round && x.a === m.a && x.b === m.b);
-                          const cur = partial[key] ?? { w8: existing?.winner8Ball ?? null, w9: existing?.winner9Ball ?? null };
-                          const done = !!(cur.w8 && cur.w9);
-
-                          return (
-                            <tr key={key}>
-                              <td>{m.table}</td>
-                              <td>
-                                {displayName(m.a)} vs {displayName(m.b)}
-                              </td>
-                              <td>
-                                <select
-                                  value={cur.w8 ?? ''}
-                                  onChange={(e) =>
-                                    setWinner({
-                                      round: r.round,
-                                      a: m.a,
-                                      b: m.b,
-                                      table: m.table,
-                                      which: 'w8',
-                                      winner: e.target.value === '' ? null : e.target.value
-                                    })
-                                  }
-                                >
-                                  <option value="">—</option>
-                                  <option value={m.a}>{displayName(m.a)}</option>
-                                  <option value={m.b}>{displayName(m.b)}</option>
-                                </select>
-                              </td>
-                              <td>
-                                <select
-                                  value={cur.w9 ?? ''}
-                                  onChange={(e) =>
-                                    setWinner({
-                                      round: r.round,
-                                      a: m.a,
-                                      b: m.b,
-                                      table: m.table,
-                                      which: 'w9',
-                                      winner: e.target.value === '' ? null : e.target.value
-                                    })
-                                  }
-                                >
-                                  <option value="">—</option>
-                                  <option value={m.a}>{displayName(m.a)}</option>
-                                  <option value={m.b}>{displayName(m.b)}</option>
-                                </select>
-                              </td>
-                              <td>{done ? 'Complete' : 'Incomplete'}</td>
-                            </tr>
-                          );
-                        })}
-
-                        {r.bye && (
-                          <tr key={`bye:${r.round}:${r.bye}`}>
-                            <td>Bye</td>
-                            <td>{displayName(r.bye)} (bye)</td>
-                            <td>
-                              <select value={r.bye} disabled>
-                                <option value={r.bye}>{displayName(r.bye)}</option>
-                              </select>
-                            </td>
-                            <td>
-                              <select value={r.bye} disabled>
-                                <option value={r.bye}>{displayName(r.bye)}</option>
-                              </select>
-                            </td>
-                            <td>Complete</td>
-                          </tr>
-                        )}
-                      </>
+                      <div key={key} style={{ padding: 10, border: '1px solid rgba(255,255,255,0.14)', borderRadius: 10, background: 'rgba(0,0,0,0.14)' }}>
+                        <div style={{ fontWeight: 700, marginBottom: 8 }}>
+                          Table {m.table} · {displayName(m.a)} vs {displayName(m.b)}
+                        </div>
+                        <label style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
+                          <span style={{ minWidth: 50, fontSize: 13 }}>8-ball</span>
+                          <select
+                            value={cur.w8 ?? ''}
+                            onChange={(e) =>
+                              setWinner({
+                                round: r.round,
+                                a: m.a,
+                                b: m.b,
+                                table: m.table,
+                                which: 'w8',
+                                winner: e.target.value === '' ? null : e.target.value
+                              })
+                            }
+                          >
+                            <option value="">—</option>
+                            <option value={m.a}>{displayName(m.a)}</option>
+                            <option value={m.b}>{displayName(m.b)}</option>
+                          </select>
+                        </label>
+                        <label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <span style={{ minWidth: 50, fontSize: 13 }}>9-ball</span>
+                          <select
+                            value={cur.w9 ?? ''}
+                            onChange={(e) =>
+                              setWinner({
+                                round: r.round,
+                                a: m.a,
+                                b: m.b,
+                                table: m.table,
+                                which: 'w9',
+                                winner: e.target.value === '' ? null : e.target.value
+                              })
+                            }
+                          >
+                            <option value="">—</option>
+                            <option value={m.a}>{displayName(m.a)}</option>
+                            <option value={m.b}>{displayName(m.b)}</option>
+                          </select>
+                        </label>
+                      </div>
                     );
-                  })()}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        ))
+                  })}
+
+                  {r.bye && (
+                    <div
+                      key={`bye:${r.round}:${r.bye}`}
+                      style={{ padding: 10, border: '1px solid rgba(255,255,255,0.14)', borderRadius: 10, background: 'rgba(0,0,0,0.14)', color: 'rgba(255,255,255,0.78)', fontSize: 14 }}
+                    >
+                      Bye · {displayName(r.bye)} has a bye
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+          );
+        })
       )}
 
       <h3 style={{ marginTop: 18 }}>Standings (derived from match wins)</h3>
@@ -351,8 +416,8 @@ export default function PoolScoringClient() {
           {(() => {
             const finalized = Object.prototype.hasOwnProperty.call(doc, 'finalizedGames') ? Boolean(doc.finalizedGames?.[game8.gameId]) : true;
             return (
-              <h4 style={{ margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span>
+              <h4 className="gameHeading" style={{ margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span className="gameLabel">
                   8-ball <span style={{ fontSize: 12, opacity: 0.8 }}>({finalized ? 'complete' : 'not complete'})</span>
                 </span>
                 <button
@@ -382,19 +447,20 @@ export default function PoolScoringClient() {
               </p>
             ) : null;
           })()}
+          <div className="tableScroll">
           <table className="table">
             <thead>
               <tr>
                 <th style={{ cursor: 'pointer' }} onClick={() => setSort8((p) => nextSort(p, 'competitor', 'asc'))}>
                   Competitor{sortMark(sort8.key === 'competitor', sort8.dir)}
                 </th>
-                <th style={{ width: 90, cursor: 'pointer' }} onClick={() => setSort8((p) => nextSort(p, 'wins', 'desc'))}>
+                <th className="colPoints" style={{ cursor: 'pointer' }} onClick={() => setSort8((p) => nextSort(p, 'wins', 'desc'))}>
                   Wins{sortMark(sort8.key === 'wins', sort8.dir)}
                 </th>
-                <th style={{ width: 140, cursor: 'pointer' }} onClick={() => setSort8((p) => nextSort(p, 'place', 'asc'))}>
+                <th className="colInput" style={{ cursor: 'pointer' }} onClick={() => setSort8((p) => nextSort(p, 'place', 'asc'))}>
                   Place{sortMark(sort8.key === 'place', sort8.dir)}
                 </th>
-                <th style={{ width: 90, cursor: 'pointer' }} onClick={() => setSort8((p) => nextSort(p, 'points', 'desc'))}>
+                <th className="colPoints" style={{ cursor: 'pointer' }} onClick={() => setSort8((p) => nextSort(p, 'points', 'desc'))}>
                   Points{sortMark(sort8.key === 'points', sort8.dir)}
                 </th>
               </tr>
@@ -440,8 +506,8 @@ export default function PoolScoringClient() {
                   return (
                     <tr key={p.personId}>
                       <td>{p.displayName}</td>
-                      <td>{r.raw ?? 0}</td>
-                      <td>
+                      <td className="colPoints">{r.raw ?? 0}</td>
+                      <td className="colInput">
                         {(isTie || isDup) && r.points == null ? (
                           <input
                             type="number"
@@ -455,13 +521,14 @@ export default function PoolScoringClient() {
                           renderPlace(r.place)
                         )}
                       </td>
-                      <td>{r.points ?? '-'}</td>
+                      <td className="colPoints">{r.points ?? '-'}</td>
                     </tr>
                   );
                 });
               })()}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
@@ -470,8 +537,8 @@ export default function PoolScoringClient() {
           {(() => {
             const finalized = Object.prototype.hasOwnProperty.call(doc, 'finalizedGames') ? Boolean(doc.finalizedGames?.[game9.gameId]) : true;
             return (
-              <h4 style={{ margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span>
+              <h4 className="gameHeading" style={{ margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span className="gameLabel">
                   9-ball <span style={{ fontSize: 12, opacity: 0.8 }}>({finalized ? 'complete' : 'not complete'})</span>
                 </span>
                 <button
@@ -501,19 +568,20 @@ export default function PoolScoringClient() {
               </p>
             ) : null;
           })()}
+          <div className="tableScroll">
           <table className="table">
             <thead>
               <tr>
                 <th style={{ cursor: 'pointer' }} onClick={() => setSort9((p) => nextSort(p, 'competitor', 'asc'))}>
                   Competitor{sortMark(sort9.key === 'competitor', sort9.dir)}
                 </th>
-                <th style={{ width: 90, cursor: 'pointer' }} onClick={() => setSort9((p) => nextSort(p, 'wins', 'desc'))}>
+                <th className="colPoints" style={{ cursor: 'pointer' }} onClick={() => setSort9((p) => nextSort(p, 'wins', 'desc'))}>
                   Wins{sortMark(sort9.key === 'wins', sort9.dir)}
                 </th>
-                <th style={{ width: 140, cursor: 'pointer' }} onClick={() => setSort9((p) => nextSort(p, 'place', 'asc'))}>
+                <th className="colInput" style={{ cursor: 'pointer' }} onClick={() => setSort9((p) => nextSort(p, 'place', 'asc'))}>
                   Place{sortMark(sort9.key === 'place', sort9.dir)}
                 </th>
-                <th style={{ width: 90, cursor: 'pointer' }} onClick={() => setSort9((p) => nextSort(p, 'points', 'desc'))}>
+                <th className="colPoints" style={{ cursor: 'pointer' }} onClick={() => setSort9((p) => nextSort(p, 'points', 'desc'))}>
                   Points{sortMark(sort9.key === 'points', sort9.dir)}
                 </th>
               </tr>
@@ -559,8 +627,8 @@ export default function PoolScoringClient() {
                   return (
                     <tr key={p.personId}>
                       <td>{p.displayName}</td>
-                      <td>{r.raw ?? 0}</td>
-                      <td>
+                      <td className="colPoints">{r.raw ?? 0}</td>
+                      <td className="colInput">
                         {(isTie || isDup) && r.points == null ? (
                           <input
                             type="number"
@@ -574,13 +642,14 @@ export default function PoolScoringClient() {
                           renderPlace(r.place)
                         )}
                       </td>
-                      <td>{r.points ?? '-'}</td>
+                      <td className="colPoints">{r.points ?? '-'}</td>
                     </tr>
                   );
                 });
               })()}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
@@ -589,8 +658,8 @@ export default function PoolScoringClient() {
           {(() => {
             const finalized = Object.prototype.hasOwnProperty.call(doc, 'finalizedGames') ? Boolean(doc.finalizedGames?.[gameRun.gameId]) : true;
             return (
-              <h3 style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span>
+              <h3 className="gameHeading" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span className="gameLabel">
                   Run <span style={{ fontSize: 12, opacity: 0.8 }}>({finalized ? 'complete' : 'not complete'})</span>
                 </span>
                 <button
@@ -624,28 +693,29 @@ export default function PoolScoringClient() {
                 </p>
               ) : null;
             })()}
+            <div className="tableScroll">
             <table className="table">
               <thead>
                 <tr>
                   <th style={{ cursor: 'pointer' }} onClick={() => setSortRun((p) => nextSort(p, 'competitor', 'asc'))}>
                     Competitor{sortMark(sortRun.key === 'competitor', sortRun.dir)}
                   </th>
-                  <th style={{ width: 120, cursor: 'pointer' }} onClick={() => setSortRun((p) => nextSort(p, 'a1', 'desc'))}>
+                  <th className="colInput" style={{ cursor: 'pointer' }} onClick={() => setSortRun((p) => nextSort(p, 'a1', 'desc'))}>
                     Attempt 1{sortMark(sortRun.key === 'a1', sortRun.dir)}
                   </th>
-                  <th style={{ width: 120, cursor: 'pointer' }} onClick={() => setSortRun((p) => nextSort(p, 'a2', 'desc'))}>
+                  <th className="colInput" style={{ cursor: 'pointer' }} onClick={() => setSortRun((p) => nextSort(p, 'a2', 'desc'))}>
                     Attempt 2{sortMark(sortRun.key === 'a2', sortRun.dir)}
                   </th>
-                  <th style={{ width: 120, cursor: 'pointer' }} onClick={() => setSortRun((p) => nextSort(p, 'tb', 'desc'))}>
+                  <th className="colInput" style={{ cursor: 'pointer' }} onClick={() => setSortRun((p) => nextSort(p, 'tb', 'desc'))}>
                     Tiebreaker{sortMark(sortRun.key === 'tb', sortRun.dir)}
                   </th>
-                  <th style={{ width: 90, cursor: 'pointer' }} onClick={() => setSortRun((p) => nextSort(p, 'raw', 'desc'))}>
+                  <th className="colPoints" style={{ cursor: 'pointer' }} onClick={() => setSortRun((p) => nextSort(p, 'raw', 'desc'))}>
                     BestRun{sortMark(sortRun.key === 'raw', sortRun.dir)}
                   </th>
-                  <th style={{ width: 140, cursor: 'pointer' }} onClick={() => setSortRun((p) => nextSort(p, 'place', 'asc'))}>
+                  <th className="colInput" style={{ cursor: 'pointer' }} onClick={() => setSortRun((p) => nextSort(p, 'place', 'asc'))}>
                     Place{sortMark(sortRun.key === 'place', sortRun.dir)}
                   </th>
-                  <th style={{ width: 90, cursor: 'pointer' }} onClick={() => setSortRun((p) => nextSort(p, 'points', 'desc'))}>
+                  <th className="colPoints" style={{ cursor: 'pointer' }} onClick={() => setSortRun((p) => nextSort(p, 'points', 'desc'))}>
                     Points{sortMark(sortRun.key === 'points', sortRun.dir)}
                   </th>
                 </tr>
@@ -715,21 +785,21 @@ export default function PoolScoringClient() {
                     return (
                       <tr key={p.personId}>
                         <td>{p.displayName}</td>
-                        <td>
+                        <td className="colInput">
                           <input
                             type="number"
                             value={attempts[0] ? attempts[0] : ''}
                             onChange={(e) => updateAttempt(p.personId, 0, e.target.value === '' ? null : Number(e.target.value))}
                           />
                         </td>
-                        <td>
+                        <td className="colInput">
                           <input
                             type="number"
                             value={attempts[1] ? attempts[1] : ''}
                             onChange={(e) => updateAttempt(p.personId, 1, e.target.value === '' ? null : Number(e.target.value))}
                           />
                         </td>
-                        <td>
+                        <td className="colInput">
                           <input
                             type="number"
                             value={attempts[2] ? attempts[2] : ''}
@@ -737,8 +807,8 @@ export default function PoolScoringClient() {
                             onChange={(e) => updateAttempt(p.personId, 2, e.target.value === '' ? null : Number(e.target.value))}
                           />
                         </td>
-                        <td>{raw ?? '-'}</td>
-                        <td>
+                        <td className="colPoints">{raw ?? '-'}</td>
+                        <td className="colInput">
                           {(isTie || isDup) && r.points == null ? (
                             <input
                               type="number"
@@ -752,13 +822,14 @@ export default function PoolScoringClient() {
                             renderPlace(r.place)
                           )}
                         </td>
-                        <td>{r.points ?? '-'}</td>
+                        <td className="colPoints">{r.points ?? '-'}</td>
                       </tr>
                     );
                   });
                 })()}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       )}
