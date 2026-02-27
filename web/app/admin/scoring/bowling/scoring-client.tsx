@@ -61,7 +61,7 @@ export default function BowlingScoringClient() {
     <div>
       <h2>Bowling</h2>
       <p className="kicker" style={{ marginTop: 6 }}>
-        Enter raw scores. If there’s a tie, resolve it via roll-off, then enter the resulting places for the tied players.
+        Enter raw scores. If there's a tie, resolve it via roll-off, then enter the resulting places for the tied players.
       </p>
 
       {bowling?.games.map((g) => {
@@ -113,60 +113,110 @@ export default function BowlingScoringClient() {
                 Duplicate place(s): {dupPlaces.join(', ')}. Resolve and assign unique places.
               </p>
             )}
-            <div className="card">
-              <div className="tableScroll">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th style={{ cursor: 'pointer' }} onClick={() => setSortByGame((p) => ({ ...p, [g.gameId]: nextSort(p[g.gameId], 'competitor') }))}>
-                      Competitor{sortMark(sort.key === 'competitor', sort.dir)}
-                    </th>
-                    <th className="colInput" style={{ cursor: 'pointer' }} onClick={() => setSortByGame((p) => ({ ...p, [g.gameId]: nextSort(p[g.gameId], 'raw') }))}>
-                      Pins{sortMark(sort.key === 'raw', sort.dir)}
-                    </th>
-                    <th className="colInput" style={{ cursor: 'pointer' }} onClick={() => setSortByGame((p) => ({ ...p, [g.gameId]: nextSort(p[g.gameId], 'place') }))}>
-                      Place{sortMark(sort.key === 'place', sort.dir)}
-                    </th>
-                    <th className="colPoints" style={{ cursor: 'pointer' }} onClick={() => setSortByGame((p) => ({ ...p, [g.gameId]: nextSort(p[g.gameId], 'points') }))}>
-                      Points{sortMark(sort.key === 'points', sort.dir)}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sorted.map(({ p, r }) => {
-                    const isTie = typeof r.raw === 'number' && (rawCounts.get(r.raw) ?? 0) > 1;
-                    const isDup = typeof r.place === 'number' && (placeCounts.get(r.place) ?? 0) > 1;
-                    return (
-                      <tr key={p.personId}>
-                        <td>{p.displayName}</td>
-                        <td className="colInput">
+
+            {/* Desktop table */}
+            <div className="matchupTable">
+              <div className="card">
+                <div className="tableScroll">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th style={{ cursor: 'pointer' }} onClick={() => setSortByGame((p) => ({ ...p, [g.gameId]: nextSort(p[g.gameId], 'competitor') }))}>
+                          Competitor{sortMark(sort.key === 'competitor', sort.dir)}
+                        </th>
+                        <th className="colInput" style={{ cursor: 'pointer' }} onClick={() => setSortByGame((p) => ({ ...p, [g.gameId]: nextSort(p[g.gameId], 'raw') }))}>
+                          Pins{sortMark(sort.key === 'raw', sort.dir)}
+                        </th>
+                        <th className="colInput" style={{ cursor: 'pointer' }} onClick={() => setSortByGame((p) => ({ ...p, [g.gameId]: nextSort(p[g.gameId], 'place') }))}>
+                          Place{sortMark(sort.key === 'place', sort.dir)}
+                        </th>
+                        <th className="colPoints" style={{ cursor: 'pointer' }} onClick={() => setSortByGame((p) => ({ ...p, [g.gameId]: nextSort(p[g.gameId], 'points') }))}>
+                          Points{sortMark(sort.key === 'points', sort.dir)}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sorted.map(({ p, r }) => {
+                        const isTie = typeof r.raw === 'number' && (rawCounts.get(r.raw) ?? 0) > 1;
+                        const isDup = typeof r.place === 'number' && (placeCounts.get(r.place) ?? 0) > 1;
+                        return (
+                          <tr key={p.personId}>
+                            <td>{p.displayName}</td>
+                            <td className="colInput">
+                              <input
+                                type="number"
+                                inputMode="numeric"
+                                value={r.raw ?? ''}
+                                onChange={(e) => setRaw(g.gameId, p.personId, e.target.value === '' ? null : Number(e.target.value))}
+                              />
+                            </td>
+                            <td className="colInput">
+                              {isTie ? (
+                                <input
+                                  type="number"
+                                  inputMode="numeric"
+                                  value={r.place ?? ''}
+                                  onChange={(e) =>
+                                    setPlace(g.gameId, p.personId, e.target.value === '' ? null : Number(e.target.value))
+                                  }
+                                  style={{ ...placeStyle(r.place), ...(isDup ? { border: '2px solid #b00020' } : {}) }}
+                                />
+                              ) : (
+                                renderPlace(r.place)
+                              )}
+                            </td>
+                            <td className="colPoints">{r.points ?? '-'}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="matchupCards">
+              {sorted.map(({ p, r }) => {
+                const isTie = typeof r.raw === 'number' && (rawCounts.get(r.raw) ?? 0) > 1;
+                const isDup = typeof r.place === 'number' && (placeCounts.get(r.place) ?? 0) > 1;
+                return (
+                  <div key={p.personId} style={{ padding: 10, border: '1px solid rgba(255,255,255,0.14)', borderRadius: 10, background: 'rgba(0,0,0,0.14)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+                      <span style={{ fontWeight: 700 }}>{p.displayName}</span>
+                      <span style={{ fontSize: 13, opacity: 0.75 }}>Pts: {r.points ?? '—'}</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 13 }}>
+                        Pins
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          value={r.raw ?? ''}
+                          onChange={(e) => setRaw(g.gameId, p.personId, e.target.value === '' ? null : Number(e.target.value))}
+                          style={{ width: 70 }}
+                        />
+                      </label>
+                      {isTie ? (
+                        <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 13 }}>
+                          Place
                           <input
                             type="number"
-                            value={r.raw ?? ''}
-                            onChange={(e) => setRaw(g.gameId, p.personId, e.target.value === '' ? null : Number(e.target.value))}
+                            inputMode="numeric"
+                            value={r.place ?? ''}
+                            onChange={(e) =>
+                              setPlace(g.gameId, p.personId, e.target.value === '' ? null : Number(e.target.value))
+                            }
+                            style={{ width: 60, ...placeStyle(r.place), ...(isDup ? { border: '2px solid #b00020' } : {}) }}
                           />
-                        </td>
-                        <td className="colInput">
-                          {isTie ? (
-                            <input
-                              type="number"
-                              value={r.place ?? ''}
-                              onChange={(e) =>
-                                setPlace(g.gameId, p.personId, e.target.value === '' ? null : Number(e.target.value))
-                              }
-                              style={{ ...placeStyle(r.place), ...(isDup ? { border: '2px solid #b00020' } : {}) }}
-                            />
-                          ) : (
-                            renderPlace(r.place)
-                          )}
-                        </td>
-                        <td className="colPoints">{r.points ?? '-'}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              </div>
+                        </label>
+                      ) : (
+                        <span style={{ fontSize: 13 }}>Place: {renderPlace(r.place)}</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </section>
         );

@@ -129,6 +129,7 @@ export default function DartsScoringClient() {
                         <td className="colInput">
                           <input
                             type="number"
+                            inputMode="numeric"
                             value={r.place ?? ''}
                             onChange={(e) =>
                               setPlace(g.gameId, p.personId, e.target.value === '' ? null : Number(e.target.value))

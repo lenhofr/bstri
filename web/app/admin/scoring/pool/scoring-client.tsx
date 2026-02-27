@@ -510,7 +510,7 @@ export default function PoolScoringClient() {
                       <td className="colInput">
                         {(isTie || isDup) && r.points == null ? (
                           <input
-                            type="number"
+                            type="number" inputMode="numeric"
                             value={r.place ?? ''}
                             style={{ ...placeStyle(r.place), ...(isDup ? { border: '2px solid #b00020' } : {}) }}
                             onChange={(e) =>
@@ -631,7 +631,7 @@ export default function PoolScoringClient() {
                       <td className="colInput">
                         {(isTie || isDup) && r.points == null ? (
                           <input
-                            type="number"
+                            type="number" inputMode="numeric"
                             value={r.place ?? ''}
                             style={{ ...placeStyle(r.place), ...(isDup ? { border: '2px solid #b00020' } : {}) }}
                             onChange={(e) =>
@@ -787,21 +787,21 @@ export default function PoolScoringClient() {
                         <td>{p.displayName}</td>
                         <td className="colInput">
                           <input
-                            type="number"
+                            type="number" inputMode="numeric"
                             value={attempts[0] ? attempts[0] : ''}
                             onChange={(e) => updateAttempt(p.personId, 0, e.target.value === '' ? null : Number(e.target.value))}
                           />
                         </td>
                         <td className="colInput">
                           <input
-                            type="number"
+                            type="number" inputMode="numeric"
                             value={attempts[1] ? attempts[1] : ''}
                             onChange={(e) => updateAttempt(p.personId, 1, e.target.value === '' ? null : Number(e.target.value))}
                           />
                         </td>
                         <td className="colInput">
                           <input
-                            type="number"
+                            type="number" inputMode="numeric"
                             value={attempts[2] ? attempts[2] : ''}
                             disabled={!isTie}
                             onChange={(e) => updateAttempt(p.personId, 2, e.target.value === '' ? null : Number(e.target.value))}
@@ -811,7 +811,7 @@ export default function PoolScoringClient() {
                         <td className="colInput">
                           {(isTie || isDup) && r.points == null ? (
                             <input
-                              type="number"
+                              type="number" inputMode="numeric"
                               value={r.place ?? ''}
                               style={{ ...placeStyle(r.place), ...(isDup ? { border: '2px solid #b00020' } : {}) }}
                               onChange={(e) =>
