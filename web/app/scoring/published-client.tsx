@@ -505,6 +505,15 @@ export default function PublishedScoringClient() {
             />
           ))}
 
+          {doc.commentary ? (
+            <section style={{ marginTop: 24 }}>
+              <h2 style={{ marginBottom: 10 }}>Commentary</h2>
+              <div className="card" style={{ whiteSpace: 'pre-wrap', lineHeight: 1.65 }}>
+                {doc.commentary}
+              </div>
+            </section>
+          ) : null}
+
         </div>
       )}
     </div>
