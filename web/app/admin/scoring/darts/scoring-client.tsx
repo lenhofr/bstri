@@ -86,19 +86,20 @@ export default function DartsScoringClient() {
         const finalized = Object.prototype.hasOwnProperty.call(doc, 'finalizedGames') ? Boolean(doc.finalizedGames?.[g.gameId]) : true;
 
         return (
-          <section key={g.gameId} style={{ marginTop: 12 }}>
-            <h3 className="gameHeading" style={{ margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <details key={g.gameId} className="gameSection" style={{ marginTop: 12 }} open={!finalized}>
+            <summary className="gameHeading">
               <span className="gameLabel">
-                {g.label} <span style={{ fontSize: 12, opacity: 0.8 }}>({finalized ? 'complete' : 'not complete'})</span>
+                {g.label} <span style={{ fontSize: 12, opacity: 0.8, fontWeight: 400 }}>({finalized ? 'complete' : 'not complete'})</span>
               </span>
+            </summary>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
               <button
                 title={finalized ? 'Mark game incomplete' : 'Mark game complete'}
                 onClick={() => setGameFinalized(g.gameId, !finalized)}
-                style={{ marginLeft: 'auto' }}
               >
                 {finalized ? 'Reopen' : 'Complete'}
               </button>
-            </h3>
+            </div>
             {dupPlaces.length > 0 && (
               <p className="kicker" style={{ marginTop: 0, color: '#b00020' }}>
                 Duplicate place(s): {dupPlaces.join(', ')}. Resolve via tie-break, then assign unique places.
@@ -145,7 +146,7 @@ export default function DartsScoringClient() {
               </table>
               </div>
             </div>
-          </section>
+          </details>
         );
       })}
     </div>
