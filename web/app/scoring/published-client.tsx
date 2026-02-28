@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { apiGetActiveTriathlon, apiGetPublished } from '../../lib/scoring-api';
 import { hasBackendConfig, runtimeConfig } from '../../lib/runtime-config';
 import type { Game, ScoringDocumentV1, SubEvent, SubEventId } from '../../lib/scoring-model';
-import { emptyGameResult } from '../../lib/scoring-rules';
+import { emptyGameResult, computeBowlingOwed } from '../../lib/scoring-rules';
 import { getLocalActiveEventId } from '../../lib/active-triathlon';
 
 const LS_PUBLISHED_PREFIX = 'bstri:scoring:published:';
@@ -18,6 +18,12 @@ function renderPlace(place: number | null) {
 function placeText(place: number | null) {
   if (place == null) return '-';
   return String(place);
+}
+
+function formatOwed(pennies: number | null): string {
+  if (pennies === null) return '-';
+  const dollars = pennies / 100;
+  return `$${dollars.toFixed(2)}`;
 }
 
 function loadPublishedDoc(key: string): ScoringDocumentV1 | null {
@@ -88,6 +94,9 @@ function GameTable(props: {
   const showAttempts = kind === 'run';
   const showRaw = kind !== 'darts';
   const rawLabel = kind === 'bowling' ? 'Pins' : kind === 'pool' ? 'Wins' : kind === 'run' ? 'BestRun' : 'Raw';
+  const showOwed = kind === 'bowling';
+
+  const bowlingOwed = showOwed ? computeBowlingOwed(game.results) : null;
 
   const sorted = participants
     .map((p, idx) => ({ p, idx, r: game.results[p.personId] ?? emptyGameResult() }))
@@ -129,7 +138,7 @@ function GameTable(props: {
       <div className="card">
       <div className="scoringDesktopOnly">
         <div className="scoringTableWrap">
-          <table className="table scoringTable" style={{ minWidth: showAttempts ? 760 : 520 }}>
+          <table className="table scoringTable" style={{ minWidth: showAttempts ? 760 : showOwed ? 640 : 520 }}>
             <thead>
               <tr>
                 <th style={{ cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'competitor', 'asc'))}>
@@ -161,6 +170,9 @@ function GameTable(props: {
                 <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'points', 'desc'))}>
                   Points{sortMark(sort.key === 'points', sort.dir)}
                 </th>
+                {showOwed && (
+                  <th style={{ width: 110 }}>Owes</th>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -175,6 +187,7 @@ function GameTable(props: {
                     {showRaw && <td>{r.raw ?? '-'}</td>}
                     <td>{renderPlace(r.place)}</td>
                     <td>{r.points ?? '-'}</td>
+                    {showOwed && <td>{formatOwed(bowlingOwed?.[p.personId] ?? null)}</td>}
                   </tr>
                 );
               })}
@@ -219,6 +232,12 @@ function GameTable(props: {
                   <div className="scoringStatLabel">Place</div>
                   <div className="scoringStatValue">{placeText(r.place)}</div>
                 </div>
+                {showOwed && (
+                  <div>
+                    <div className="scoringStatLabel">Owes</div>
+                    <div className="scoringStatValue">{formatOwed(bowlingOwed?.[p.personId] ?? null)}</div>
+                  </div>
+                )}
               </div>
             </div>
           );
