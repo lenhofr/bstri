@@ -411,7 +411,7 @@ export default function AdminScoringClient() {
               <tr>
                 <th style={{ width: 60 }}>#</th>
                 <th>personId</th>
-                <th>displayName</th>
+                <th style={{ width: 130 }}>displayName</th>
                 <th style={{ width: 80 }}>Order</th>
                 <th style={{ width: 48 }} />
               </tr>
@@ -423,10 +423,11 @@ export default function AdminScoringClient() {
                   <td>
                     <code>{p.personId}</code>
                   </td>
-                  <td>
+                  <td style={{ width: 130 }}>
                     <input
                       value={p.displayName}
                       onChange={(e) => updateParticipantDisplayName(p.personId, e.target.value)}
+                      style={{ width: '100%' }}
                     />
                   </td>
                   <td>

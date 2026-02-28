@@ -159,11 +159,24 @@ export default function PoolScoringClient() {
 
   const rounds = doc.eventMeta?.poolSchedule?.rounds ?? [];
 
+  const finalized8 = game8
+    ? Object.prototype.hasOwnProperty.call(doc, 'finalizedGames') ? Boolean(doc.finalizedGames?.[game8.gameId]) : true
+    : false;
+  const finalized9 = game9
+    ? Object.prototype.hasOwnProperty.call(doc, 'finalizedGames') ? Boolean(doc.finalizedGames?.[game9.gameId]) : true
+    : false;
+  const finalizedRun = gameRun
+    ? Object.prototype.hasOwnProperty.call(doc, 'finalizedGames') ? Boolean(doc.finalizedGames?.[gameRun.gameId]) : true
+    : false;
+
   return (
     <div>
       <h2>Pool</h2>
 
-      <h3 style={{ marginTop: 12 }}>Schedule Setup</h3>
+      <details className="gameSection" style={{ marginTop: 12 }} open={rounds.length === 0}>
+        <summary className="gameHeading">
+          <span className="gameLabel">Schedule Setup</span>
+        </summary>
       <div className="card" style={{ display: 'grid', gap: 10 }}>
         <div>
           <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 6 }}>Competitor order (drives round-robin pairings)</div>
@@ -208,8 +221,12 @@ export default function PoolScoringClient() {
           </div>
         </div>
       </div>
+      </details>
 
-      <h3 style={{ marginTop: 18 }}>8-ball / 9-ball Matchups</h3>
+      <details className="gameSection" style={{ marginTop: 18 }} open={rounds.length > 0}>
+        <summary className="gameHeading">
+          <span className="gameLabel">8-ball / 9-ball Matchups</span>
+        </summary>
       {rounds.length === 0 ? (
         <div className="card">Generate the schedule to start entering match winners.</div>
       ) : (
@@ -234,9 +251,18 @@ export default function PoolScoringClient() {
               return cmpStr(labelA, labelB, matchSort.dir) || a.idx - b.idx;
             });
 
+          const allRoundDone = r.matches.every((m) => {
+            const key = matchKey({ round: r.round, a: m.a, b: m.b });
+            const existing = doc.poolMatches.find((x) => x.round === r.round && x.a === m.a && x.b === m.b);
+            const cur = partial[key] ?? { w8: existing?.winner8Ball ?? null, w9: existing?.winner9Ball ?? null };
+            return !!(cur.w8 && cur.w9);
+          });
+
           return (
-            <section key={r.round} style={{ marginTop: 12 }}>
-              <h4 style={{ margin: '0 0 6px' }}>Round {r.round}</h4>
+            <details key={r.round} className="gameSection" style={{ marginTop: 12 }} open={!allRoundDone}>
+              <summary className="gameHeading">
+                <span className="gameLabel">Round {r.round}</span>
+              </summary>
               <div className="card">
                 {/* Desktop table */}
                 <div className="matchupTable">
@@ -405,31 +431,29 @@ export default function PoolScoringClient() {
                   )}
                 </div>
               </div>
-            </section>
+            </details>
           );
         })
       )}
+      </details>
 
       <h3 style={{ marginTop: 18 }}>Standings (derived from match wins)</h3>
       {game8 && (
-        <div className="card" style={{ marginTop: 8 }}>
-          {(() => {
-            const finalized = Object.prototype.hasOwnProperty.call(doc, 'finalizedGames') ? Boolean(doc.finalizedGames?.[game8.gameId]) : true;
-            return (
-              <h4 className="gameHeading" style={{ margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span className="gameLabel">
-                  8-ball <span style={{ fontSize: 12, opacity: 0.8 }}>({finalized ? 'complete' : 'not complete'})</span>
-                </span>
-                <button
-                  title={finalized ? 'Mark game incomplete' : 'Mark game complete'}
-                  onClick={() => setGameFinalized(game8.gameId, !finalized)}
-                  style={{ marginLeft: 'auto' }}
-                >
-                  {finalized ? 'Reopen' : 'Complete'}
-                </button>
-              </h4>
-            );
-          })()}
+        <details className="gameSection" style={{ marginTop: 8 }} open={!finalized8}>
+          <summary className="gameHeading">
+            <span className="gameLabel">
+              8-ball <span style={{ fontSize: 12, opacity: 0.8, fontWeight: 400 }}>({finalized8 ? 'complete' : 'not complete'})</span>
+            </span>
+          </summary>
+          <div className="card">
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+            <button
+              title={finalized8 ? 'Mark game incomplete' : 'Mark game complete'}
+              onClick={() => setGameFinalized(game8.gameId, !finalized8)}
+            >
+              {finalized8 ? 'Reopen' : 'Complete'}
+            </button>
+          </div>
           {(() => {
             const placeCounts = new Map<number, number>();
             for (const p of participants) {
@@ -529,28 +553,25 @@ export default function PoolScoringClient() {
             </tbody>
           </table>
           </div>
-        </div>
+          </div>
+        </details>
       )}
 
       {game9 && (
-        <div className="card" style={{ marginTop: 12 }}>
-          {(() => {
-            const finalized = Object.prototype.hasOwnProperty.call(doc, 'finalizedGames') ? Boolean(doc.finalizedGames?.[game9.gameId]) : true;
-            return (
-              <h4 className="gameHeading" style={{ margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span className="gameLabel">
-                  9-ball <span style={{ fontSize: 12, opacity: 0.8 }}>({finalized ? 'complete' : 'not complete'})</span>
-                </span>
-                <button
-                  title={finalized ? 'Mark game incomplete' : 'Mark game complete'}
-                  onClick={() => setGameFinalized(game9.gameId, !finalized)}
-                  style={{ marginLeft: 'auto' }}
-                >
-                  {finalized ? 'Reopen' : 'Complete'}
-                </button>
-              </h4>
-            );
-          })()}
+        <details className="gameSection" style={{ marginTop: 12 }} open={!finalized9}>
+          <summary className="gameHeading">
+            <span className="gameLabel">
+              9-ball <span style={{ fontSize: 12, opacity: 0.8, fontWeight: 400 }}>({finalized9 ? 'complete' : 'not complete'})</span>
+            </span>
+          </summary>
+          <div className="card">
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+            <button
+              onClick={() => setGameFinalized(game9.gameId, !finalized9)}
+            >
+              {finalized9 ? 'Reopen' : 'Complete'}
+            </button>
+          </div>
           {(() => {
             const placeCounts = new Map<number, number>();
             for (const p of participants) {
@@ -650,28 +671,25 @@ export default function PoolScoringClient() {
             </tbody>
           </table>
           </div>
-        </div>
+          </div>
+        </details>
       )}
 
       {gameRun && (
-        <div style={{ marginTop: 18 }}>
-          {(() => {
-            const finalized = Object.prototype.hasOwnProperty.call(doc, 'finalizedGames') ? Boolean(doc.finalizedGames?.[gameRun.gameId]) : true;
-            return (
-              <h3 className="gameHeading" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span className="gameLabel">
-                  Run <span style={{ fontSize: 12, opacity: 0.8 }}>({finalized ? 'complete' : 'not complete'})</span>
-                </span>
-                <button
-                  title={finalized ? 'Mark game incomplete' : 'Mark game complete'}
-                  onClick={() => setGameFinalized(gameRun.gameId, !finalized)}
-                  style={{ marginLeft: 'auto' }}
-                >
-                  {finalized ? 'Reopen' : 'Complete'}
-                </button>
-              </h3>
-            );
-          })()}
+        <details className="gameSection" style={{ marginTop: 18 }} open={!finalizedRun}>
+          <summary className="gameHeading">
+            <span className="gameLabel">
+              Run <span style={{ fontSize: 12, opacity: 0.8, fontWeight: 400 }}>({finalizedRun ? 'complete' : 'not complete'})</span>
+            </span>
+          </summary>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+            <button
+              title={finalizedRun ? 'Mark game incomplete' : 'Mark game complete'}
+              onClick={() => setGameFinalized(gameRun.gameId, !finalizedRun)}
+            >
+              {finalizedRun ? 'Reopen' : 'Complete'}
+            </button>
+          </div>
           <p className="kicker" style={{ marginTop: 6 }}>
             Enter two attempts (and optionally a tiebreaker run). Official score is the max of Attempt 1/2.
           </p>
@@ -831,7 +849,7 @@ export default function PoolScoringClient() {
             </table>
             </div>
           </div>
-        </div>
+        </details>
       )}
     </div>
   );

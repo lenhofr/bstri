@@ -852,6 +852,31 @@ details[open] > .scoringTotalsToggle::before {
 
 .matchupCards { display: none; }
 
+.gameSection > summary {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.gameSection > summary::-webkit-details-marker { display: none; }
+
+.gameSection > summary::before {
+  content: '▸';
+  font-size: 10px;
+  opacity: 0.55;
+  display: inline-block;
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+
+.gameSection[open] > summary::before { transform: rotate(90deg); }
+
 @media (max-width: 600px) {
   .shell { padding-left: 6px; padding-right: 6px; }
 
@@ -882,7 +907,5 @@ details[open] > .scoringTotalsToggle::before {
 
   .matchupTable { display: none; }
 
-  .gameHeading { flex-wrap: wrap; row-gap: 6px; }
-
-  .gameHeading .gameLabel { flex: 1 1 100%; }
+  .gameSection > summary { font-size: 1em; }
 }
