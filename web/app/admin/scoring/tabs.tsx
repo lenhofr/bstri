@@ -15,13 +15,14 @@ export default function AdminScoringTabs() {
     { href: '/admin/scoring', label: 'Setup' },
     { href: '/admin/scoring/bowling', label: 'Bowling' },
     { href: '/admin/scoring/pool', label: 'Pool' },
-    { href: '/admin/scoring/darts', label: 'Darts' }
+    { href: '/admin/scoring/darts', label: 'Darts' },
+    { href: '/admin/scoring/notes', label: 'Notes' }
   ];
 
   return (
     <nav
       aria-label="Admin scoring sections"
-      style={{ margin: '10px 0 16px' }}
+      style={{ margin: '10px 0 16px', textAlign: 'center' }}
     >
       <div className="tabs">
         {tabs.map((t) => {

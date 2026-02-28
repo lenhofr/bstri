@@ -9,7 +9,7 @@ export default function AdminScoringLayout(props: { children: React.ReactNode })
   return (
     <AdminScoringAuthGate>
       <ScoringProvider>
-        <div className="adminScoringPanel" style={{ padding: 16 }}>
+        <div className="adminScoringPanel">
           <div style={{ display: 'flex', gap: 12, justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <h1 className="panelTitle" style={{ marginBottom: 4 }}>

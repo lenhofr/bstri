@@ -848,9 +848,19 @@ details[open] > .scoringTotalsToggle::before {
 
 .colPoints { width: 70px; }
 
+.adminScoringPanel { padding: 16px; }
+
 .matchupCards { display: none; }
 
 @media (max-width: 600px) {
+  .shell { padding-left: 6px; padding-right: 6px; }
+
+  .frame { padding: 8px; }
+
+  .panel { padding-left: 14px; padding-right: 14px; }
+
+  .adminScoringPanel { padding: 8px; }
+
   .adminScoringPanel .panelTitle {
     font-size: 22px;
     padding-right: 0;
