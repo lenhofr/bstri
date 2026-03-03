@@ -485,6 +485,31 @@ export function recomputeDocumentDerivedFields(params: {
   return { ...next, totals: computeTotalsFromPoints(next) };
 }
 
+/**
+ * Computes the amount owed (in pennies) per player for a bowling game.
+ * Formula: (highest_score - player_score) * 5 pennies.
+ * Returns null for the highest scorer(s) and for players without a score.
+ */
+export function computeBowlingOwed(results: Record<string, { raw: number | null }>): Record<string, number | null> {
+  const scores = Object.values(results)
+    .map((r) => r.raw)
+    .filter((s): s is number => typeof s === 'number');
+
+  if (scores.length === 0) {
+    return Object.fromEntries(Object.keys(results).map((k) => [k, null]));
+  }
+
+  const highest = Math.max(...scores);
+
+  return Object.fromEntries(
+    Object.entries(results).map(([pid, r]) => {
+      if (typeof r.raw !== 'number') return [pid, null];
+      if (r.raw === highest) return [pid, null];
+      return [pid, (highest - r.raw) * 5];
+    })
+  );
+}
+
 export function emptyGameResult(): GameResult {
   return { place: null, raw: null, points: null, attempts: null, tieBreak: null };
 }
