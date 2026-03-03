@@ -269,7 +269,7 @@ function SubEventSection(props: {
         // Legacy docs (no finalizedGames field) treat all games as finalized.
         const isFinalized = finalizedGames === undefined ? true : Boolean(finalizedGames[g.gameId]);
 
-        const defaultSort: SortSpec = kind === 'bowling' ? { key: 'place', dir: 'asc' } : { key: 'order', dir: 'asc' };
+        const defaultSort: SortSpec = { key: 'place', dir: 'asc' };
         const sort = sortByGame[g.gameId] ?? defaultSort;
 
         return (
