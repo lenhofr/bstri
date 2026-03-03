@@ -86,15 +86,16 @@ function GameTable(props: {
   participants: ScoringDocumentV1['participants'];
   game: Game;
   kind: TableKind;
+  isFinalized: boolean;
   sort: SortSpec;
   setSort: (next: SortSpec) => void;
 }) {
-  const { participants, game, kind, sort, setSort } = props;
+  const { participants, game, kind, isFinalized, sort, setSort } = props;
 
   const showAttempts = kind === 'run';
   const showRaw = kind !== 'darts';
   const rawLabel = kind === 'bowling' ? 'Pins' : kind === 'pool' ? 'Wins' : kind === 'run' ? 'BestRun' : 'Raw';
-  const showOwed = kind === 'bowling';
+  const showOwed = kind === 'bowling' && isFinalized;
 
   const bowlingOwed = showOwed ? computeBowlingOwed(game.results) : null;
 
@@ -251,11 +252,12 @@ function GameTable(props: {
 function SubEventSection(props: {
   subEvent: SubEvent;
   participants: ScoringDocumentV1['participants'];
+  finalizedGames: ScoringDocumentV1['finalizedGames'];
   sortByGame: Record<string, SortSpec>;
   setSortByGame: React.Dispatch<React.SetStateAction<Record<string, SortSpec>>>;
   mobileHidden: boolean;
 }) {
-  const { subEvent, participants, sortByGame, setSortByGame, mobileHidden } = props;
+  const { subEvent, participants, finalizedGames, sortByGame, setSortByGame, mobileHidden } = props;
 
   return (
     <section className={mobileHidden ? 'scoringMobileHidden' : undefined} style={{ marginTop: 18 }}>
@@ -264,7 +266,11 @@ function SubEventSection(props: {
         const kind: TableKind =
           subEvent.subEventId === 'pool' ? (g.gameId === 'pool-3' ? 'run' : 'pool') : subEvent.subEventId;
 
-        const sort = sortByGame[g.gameId] ?? { key: 'order', dir: 'asc' };
+        // Legacy docs (no finalizedGames field) treat all games as finalized.
+        const isFinalized = finalizedGames === undefined ? true : Boolean(finalizedGames[g.gameId]);
+
+        const defaultSort: SortSpec = kind === 'bowling' ? { key: 'place', dir: 'asc' } : { key: 'order', dir: 'asc' };
+        const sort = sortByGame[g.gameId] ?? defaultSort;
 
         return (
           <GameTable
@@ -272,6 +278,7 @@ function SubEventSection(props: {
             participants={participants}
             game={g}
             kind={kind}
+            isFinalized={isFinalized}
             sort={sort}
             setSort={(next) => setSortByGame((p) => ({ ...p, [g.gameId]: next }))}
           />
@@ -518,6 +525,7 @@ export default function PublishedScoringClient() {
               key={se.subEventId}
               subEvent={se}
               participants={orderedParticipants}
+              finalizedGames={doc.finalizedGames}
               sortByGame={sortByGame}
               setSortByGame={setSortByGame}
               mobileHidden={mobileSubEvent !== se.subEventId}
