@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { apiGetActiveTriathlon, apiGetPublished } from '../../lib/scoring-api';
 import { hasBackendConfig, runtimeConfig } from '../../lib/runtime-config';
 import type { Game, ScoringDocumentV1, SubEvent, SubEventId } from '../../lib/scoring-model';
-import { emptyGameResult, computeBowlingOwed } from '../../lib/scoring-rules';
+import { emptyGameResult, computeBowlingOwed, payoutForPlace, formatPayout } from '../../lib/scoring-rules';
 import { getLocalActiveEventId } from '../../lib/active-triathlon';
 
 const LS_PUBLISHED_PREFIX = 'bstri:scoring:published:';
@@ -95,6 +95,7 @@ function GameTable(props: {
   const showAttempts = kind === 'run';
   const showRaw = kind !== 'darts';
   const rawLabel = kind === 'bowling' ? 'Pins' : kind === 'pool' ? 'Wins' : kind === 'run' ? 'BestRun' : 'Raw';
+  const showPayout = isFinalized;
   const showOwed = kind === 'bowling' && isFinalized;
 
   const bowlingOwed = showOwed ? computeBowlingOwed(game.results) : null;
@@ -137,113 +138,123 @@ function GameTable(props: {
         <h4>{game.label}</h4>
       </summary>
       <div className="card">
-      <div className="scoringDesktopOnly">
-        <div className="scoringTableWrap">
-          <table className="table scoringTable" style={{ minWidth: showAttempts ? 760 : showOwed ? 640 : 520 }}>
-            <thead>
-              <tr>
-                <th style={{ cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'competitor', 'asc'))}>
-                  Competitor{sortMark(sort.key === 'competitor', sort.dir)}
-                </th>
-                {showAttempts && (
-                  <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'a1', 'desc'))}>
-                    Attempt 1{sortMark(sort.key === 'a1', sort.dir)}
+        <div className="scoringDesktopOnly">
+          <div className="scoringTableWrap">
+            <table className="table scoringTable" style={{ minWidth: showAttempts ? 760 : showOwed ? 720 : showPayout ? 600 : 520 }}>
+              <thead>
+                <tr>
+                  <th style={{ cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'competitor', 'asc'))}>
+                    Competitor{sortMark(sort.key === 'competitor', sort.dir)}
                   </th>
-                )}
-                {showAttempts && (
-                  <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'a2', 'desc'))}>
-                    Attempt 2{sortMark(sort.key === 'a2', sort.dir)}
+                  {showAttempts && (
+                    <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'a1', 'desc'))}>
+                      Attempt 1{sortMark(sort.key === 'a1', sort.dir)}
+                    </th>
+                  )}
+                  {showAttempts && (
+                    <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'a2', 'desc'))}>
+                      Attempt 2{sortMark(sort.key === 'a2', sort.dir)}
+                    </th>
+                  )}
+                  {showAttempts && (
+                    <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'tb', 'desc'))}>
+                      Tiebreaker{sortMark(sort.key === 'tb', sort.dir)}
+                    </th>
+                  )}
+                  {showRaw && (
+                    <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'raw', 'desc'))}>
+                      {rawLabel}{sortMark(sort.key === 'raw', sort.dir)}
+                    </th>
+                  )}
+                  <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'place', 'asc'))}>
+                    Place{sortMark(sort.key === 'place', sort.dir)}
                   </th>
-                )}
-                {showAttempts && (
-                  <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'tb', 'desc'))}>
-                    Tiebreaker{sortMark(sort.key === 'tb', sort.dir)}
+                  <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'points', 'desc'))}>
+                    Points{sortMark(sort.key === 'points', sort.dir)}
                   </th>
-                )}
-                {showRaw && (
-                  <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'raw', 'desc'))}>
-                    {rawLabel}{sortMark(sort.key === 'raw', sort.dir)}
-                  </th>
-                )}
-                <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'place', 'asc'))}>
-                  Place{sortMark(sort.key === 'place', sort.dir)}
-                </th>
-                <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setSort(nextSort(sort, 'points', 'desc'))}>
-                  Points{sortMark(sort.key === 'points', sort.dir)}
-                </th>
-                {showOwed && (
-                  <th style={{ width: 110 }}>Owes</th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map(({ p, r }) => {
-                const attempts = r.attempts ?? [0, 0, 0];
-                return (
-                  <tr key={p.personId}>
-                    <td>{p.displayName}</td>
-                    {showAttempts && <td>{attempts[0] || '-'}</td>}
-                    {showAttempts && <td>{attempts[1] || '-'}</td>}
-                    {showAttempts && <td>{attempts[2] || '-'}</td>}
-                    {showRaw && <td>{r.raw ?? '-'}</td>}
-                    <td>{renderPlace(r.place)}</td>
-                    <td>{r.points ?? '-'}</td>
-                    {showOwed && <td>{formatOwed(bowlingOwed?.[p.personId] ?? null)}</td>}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                  {showPayout && (
+                    <th style={{ width: 90 }}>Payout</th>
+                  )}
+                  {showOwed && (
+                    <th style={{ width: 110 }}>Owes</th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map(({ p, r }) => {
+                  const attempts = r.attempts ?? [0, 0, 0];
+                  return (
+                    <tr key={p.personId}>
+                      <td>{p.displayName}</td>
+                      {showAttempts && <td>{attempts[0] || '-'}</td>}
+                      {showAttempts && <td>{attempts[1] || '-'}</td>}
+                      {showAttempts && <td>{attempts[2] || '-'}</td>}
+                      {showRaw && <td>{r.raw ?? '-'}</td>}
+                      <td>{renderPlace(r.place)}</td>
+                      <td>{r.points ?? '-'}</td>
+                      {showPayout && <td>{formatPayout(payoutForPlace(r.place, kind))}</td>}
+                      {showOwed && <td>{formatOwed(bowlingOwed?.[p.personId] ?? null)}</td>}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
 
-      <div className="scoringMobileOnly scoringGameCards">
-        {sorted.map(({ p, r }) => {
-          const attempts = r.attempts ?? [0, 0, 0];
-          return (
-            <div key={p.personId} className="scoringGameCard">
-              <div className="scoringGameCardHeader">
-                <div className="scoringGameName">{p.displayName}</div>
-                <div className="scoringGameTriPoints">Pts {r.points ?? '-'}</div>
-              </div>
-              <div className="scoringGameStats">
-                {showAttempts ? (
-                  <>
-                    <div>
-                      <div className="scoringStatLabel">A1</div>
-                      <div className="scoringStatValue">{attempts[0] || '-'}</div>
-                    </div>
-                    <div>
-                      <div className="scoringStatLabel">A2</div>
-                      <div className="scoringStatValue">{attempts[1] || '-'}</div>
-                    </div>
-                    <div>
-                      <div className="scoringStatLabel">TB</div>
-                      <div className="scoringStatValue">{attempts[2] || '-'}</div>
-                    </div>
-                  </>
-                ) : null}
-                {showRaw ? (
-                  <div>
-                    <div className="scoringStatLabel">{rawLabel}</div>
-                    <div className="scoringStatValue">{r.raw ?? '-'}</div>
-                  </div>
-                ) : null}
-                <div>
-                  <div className="scoringStatLabel">Place</div>
-                  <div className="scoringStatValue">{placeText(r.place)}</div>
+        <div className="scoringMobileOnly scoringGameCards">
+          {sorted.map(({ p, r }) => {
+            const attempts = r.attempts ?? [0, 0, 0];
+            return (
+              <div key={p.personId} className="scoringGameCard">
+                <div className="scoringGameCardHeader">
+                  <div className="scoringGameName">{p.displayName}</div>
+                  <div className="scoringGameTriPoints">Pts {r.points ?? '-'}</div>
                 </div>
-                {showOwed && (
+                <div className="scoringGameStats">
+                  {showAttempts ? (
+                    <>
+                      <div>
+                        <div className="scoringStatLabel">A1</div>
+                        <div className="scoringStatValue">{attempts[0] || '-'}</div>
+                      </div>
+                      <div>
+                        <div className="scoringStatLabel">A2</div>
+                        <div className="scoringStatValue">{attempts[1] || '-'}</div>
+                      </div>
+                      <div>
+                        <div className="scoringStatLabel">TB</div>
+                        <div className="scoringStatValue">{attempts[2] || '-'}</div>
+                      </div>
+                    </>
+                  ) : null}
+                  {showRaw ? (
+                    <div>
+                      <div className="scoringStatLabel">{rawLabel}</div>
+                      <div className="scoringStatValue">{r.raw ?? '-'}</div>
+                    </div>
+                  ) : null}
                   <div>
-                    <div className="scoringStatLabel">Owes</div>
-                    <div className="scoringStatValue">{formatOwed(bowlingOwed?.[p.personId] ?? null)}</div>
+                    <div className="scoringStatLabel">Place</div>
+                    <div className="scoringStatValue">{placeText(r.place)}</div>
                   </div>
-                )}
+                  {showPayout && (
+                    <div>
+                      <div className="scoringStatLabel">Payout</div>
+                      <div className="scoringStatValue">{formatPayout(payoutForPlace(r.place, kind))}</div>
+                    </div>
+                  )}
+                  {showOwed && (
+                    <div>
+                      <div className="scoringStatLabel">Owes</div>
+                      <div className="scoringStatValue">{formatOwed(bowlingOwed?.[p.personId] ?? null)}</div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
       </div>
     </details>
   );
@@ -419,91 +430,91 @@ export default function PublishedScoringClient() {
       {screenState !== 'ready' || !doc ? null : (
         <div style={{ marginTop: 12 }}>
           <details open style={{ marginTop: 6 }}>
-          <summary className="scoringTotalsToggle">
-            <h2>
-              Current Standings
-              {doc.publishedAt && formatPublishedAtShort(doc.publishedAt) ? (
-                <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 13, opacity: 0.6, marginLeft: 10 }}>
-                  · {formatPublishedAtShort(doc.publishedAt)}
-                </span>
-              ) : null}
-            </h2>
-          </summary>
-          <div className="card" style={{ marginTop: 10 }}>
-            <div className="scoringDesktopOnly">
-              <div className="scoringTableWrap">
-                <table className="table scoringTable" style={{ minWidth: 560 }}>
-                  <thead>
-                    <tr>
-                      <th style={{ cursor: 'pointer' }} onClick={() => setTotalsSort(nextSort(totalsSort, 'competitor', 'asc'))}>
-                        Competitor{sortMark(totalsSort.key === 'competitor', totalsSort.dir)}
-                      </th>
-                      <th style={{ width: 90, cursor: 'pointer' }} onClick={() => setTotalsSort(nextSort(totalsSort, 'bowling', 'desc'))}>
-                        Bowling{sortMark(totalsSort.key === 'bowling', totalsSort.dir)}
-                      </th>
-                      <th style={{ width: 90, cursor: 'pointer' }} onClick={() => setTotalsSort(nextSort(totalsSort, 'pool', 'desc'))}>
-                        Pool{sortMark(totalsSort.key === 'pool', totalsSort.dir)}
-                      </th>
-                      <th style={{ width: 90, cursor: 'pointer' }} onClick={() => setTotalsSort(nextSort(totalsSort, 'darts', 'desc'))}>
-                        Darts{sortMark(totalsSort.key === 'darts', totalsSort.dir)}
-                      </th>
-                      <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setTotalsSort(nextSort(totalsSort, 'triathlon', 'desc'))}>
-                        Triathlon{sortMark(totalsSort.key === 'triathlon', totalsSort.dir)}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(showAllStandings ? totalsRows : totalsRows.slice(0, 5)).map(({ p, t }) => (
-                      <tr key={p.personId}>
-                        <td>{p.displayName}</td>
-                        <td>{t?.bySubEvent.bowling ?? 0}</td>
-                        <td>{t?.bySubEvent.pool ?? 0}</td>
-                        <td>{t?.bySubEvent.darts ?? 0}</td>
-                        <td>
-                          <b>{t?.triathlon ?? 0}</b>
-                        </td>
+            <summary className="scoringTotalsToggle">
+              <h2>
+                Current Standings
+                {doc.publishedAt && formatPublishedAtShort(doc.publishedAt) ? (
+                  <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 13, opacity: 0.6, marginLeft: 10 }}>
+                    · {formatPublishedAtShort(doc.publishedAt)}
+                  </span>
+                ) : null}
+              </h2>
+            </summary>
+            <div className="card" style={{ marginTop: 10 }}>
+              <div className="scoringDesktopOnly">
+                <div className="scoringTableWrap">
+                  <table className="table scoringTable" style={{ minWidth: 560 }}>
+                    <thead>
+                      <tr>
+                        <th style={{ cursor: 'pointer' }} onClick={() => setTotalsSort(nextSort(totalsSort, 'competitor', 'asc'))}>
+                          Competitor{sortMark(totalsSort.key === 'competitor', totalsSort.dir)}
+                        </th>
+                        <th style={{ width: 90, cursor: 'pointer' }} onClick={() => setTotalsSort(nextSort(totalsSort, 'bowling', 'desc'))}>
+                          Bowling{sortMark(totalsSort.key === 'bowling', totalsSort.dir)}
+                        </th>
+                        <th style={{ width: 90, cursor: 'pointer' }} onClick={() => setTotalsSort(nextSort(totalsSort, 'pool', 'desc'))}>
+                          Pool{sortMark(totalsSort.key === 'pool', totalsSort.dir)}
+                        </th>
+                        <th style={{ width: 90, cursor: 'pointer' }} onClick={() => setTotalsSort(nextSort(totalsSort, 'darts', 'desc'))}>
+                          Darts{sortMark(totalsSort.key === 'darts', totalsSort.dir)}
+                        </th>
+                        <th style={{ width: 110, cursor: 'pointer' }} onClick={() => setTotalsSort(nextSort(totalsSort, 'triathlon', 'desc'))}>
+                          Triathlon{sortMark(totalsSort.key === 'triathlon', totalsSort.dir)}
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="scoringMobileOnly scoringTotalsCards">
-              {(showAllStandings ? totalsRows : totalsRows.slice(0, 5)).map(({ p, t }) => (
-                <div key={p.personId} className="scoringTotalsCard">
-                  <div className="scoringGameCardHeader">
-                    <div className="scoringGameName">{p.displayName}</div>
-                    <div className="scoringGameTriPoints">Tri {t?.triathlon ?? 0}</div>
-                  </div>
-                  <div className="scoringGameStats">
-                    <div>
-                      <div className="scoringStatLabel">Bowling</div>
-                      <div className="scoringStatValue">{t?.bySubEvent.bowling ?? 0}</div>
-                    </div>
-                    <div>
-                      <div className="scoringStatLabel">Pool</div>
-                      <div className="scoringStatValue">{t?.bySubEvent.pool ?? 0}</div>
-                    </div>
-                    <div>
-                      <div className="scoringStatLabel">Darts</div>
-                      <div className="scoringStatValue">{t?.bySubEvent.darts ?? 0}</div>
-                    </div>
-                  </div>
+                    </thead>
+                    <tbody>
+                      {(showAllStandings ? totalsRows : totalsRows.slice(0, 5)).map(({ p, t }) => (
+                        <tr key={p.personId}>
+                          <td>{p.displayName}</td>
+                          <td>{t?.bySubEvent.bowling ?? 0}</td>
+                          <td>{t?.bySubEvent.pool ?? 0}</td>
+                          <td>{t?.bySubEvent.darts ?? 0}</td>
+                          <td>
+                            <b>{t?.triathlon ?? 0}</b>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              ))}
-            </div>
+              </div>
 
-            {totalsRows.length > 5 && (
-              <button
-                type="button"
-                onClick={() => setShowAllStandings((v) => !v)}
-                style={{ marginTop: 10, width: '100%', fontSize: 13 }}
-              >
-                {showAllStandings ? 'Show less' : `Show all ${totalsRows.length} competitors`}
-              </button>
-            )}
-          </div>
+              <div className="scoringMobileOnly scoringTotalsCards">
+                {(showAllStandings ? totalsRows : totalsRows.slice(0, 5)).map(({ p, t }) => (
+                  <div key={p.personId} className="scoringTotalsCard">
+                    <div className="scoringGameCardHeader">
+                      <div className="scoringGameName">{p.displayName}</div>
+                      <div className="scoringGameTriPoints">Tri {t?.triathlon ?? 0}</div>
+                    </div>
+                    <div className="scoringGameStats">
+                      <div>
+                        <div className="scoringStatLabel">Bowling</div>
+                        <div className="scoringStatValue">{t?.bySubEvent.bowling ?? 0}</div>
+                      </div>
+                      <div>
+                        <div className="scoringStatLabel">Pool</div>
+                        <div className="scoringStatValue">{t?.bySubEvent.pool ?? 0}</div>
+                      </div>
+                      <div>
+                        <div className="scoringStatLabel">Darts</div>
+                        <div className="scoringStatValue">{t?.bySubEvent.darts ?? 0}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {totalsRows.length > 5 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllStandings((v) => !v)}
+                  style={{ marginTop: 10, width: '100%', fontSize: 13 }}
+                >
+                  {showAllStandings ? 'Show less' : `Show all ${totalsRows.length} competitors`}
+                </button>
+              )}
+            </div>
           </details>
 
           <div className="scoringMobileTabs" role="tablist" aria-label="Scoring sub-events">
