@@ -53,7 +53,7 @@ export function computePlacesFromRawDescending(params: {
 
   // NOTE: ties produce null placings; admin must resolve via tieBreak + explicit place.
   let place = 1;
-  for (let i = 0; i < entries.length; ) {
+  for (let i = 0; i < entries.length;) {
     const score = entries[i].raw;
     const tied = [entries[i]];
     i++;
@@ -239,7 +239,7 @@ function computePoolMatchWinPlacesFromHeadToHead(params: {
   const needsManual = new Set<PersonId>();
 
   let nextPlace = 1;
-  for (let i = 0; i < entries.length; ) {
+  for (let i = 0; i < entries.length;) {
     const wins = entries[i]!.raw;
     const tied: PersonId[] = [entries[i]!.personId];
     i++;
@@ -282,7 +282,7 @@ function computePoolMatchWinPlacesFromHeadToHead(params: {
       .map((pid, stableIdx) => ({ pid, stableIdx, w: h2hWins[pid] ?? 0 }))
       .sort((a, b) => b.w - a.w || a.stableIdx - b.stableIdx);
 
-    for (let j = 0; j < ordered.length; ) {
+    for (let j = 0; j < ordered.length;) {
       const w = ordered[j]!.w;
       const group: PersonId[] = [ordered[j]!.pid];
       j++;
@@ -409,10 +409,10 @@ export function recomputeDocumentDerivedFields(params: {
         const places = poolInProgress
           ? (Object.fromEntries(Object.keys(withRaw.results).map((pid) => [pid, null])) as Record<PersonId, number | null>)
           : poolRun?.places ??
-            poolWins?.places ??
-            computePlacesFromRawDescending({
-              byPerson: Object.fromEntries(Object.entries(withRaw.results).map(([k, v]) => [k, { raw: v.raw }]))
-            });
+          poolWins?.places ??
+          computePlacesFromRawDescending({
+            byPerson: Object.fromEntries(Object.entries(withRaw.results).map(([k, v]) => [k, { raw: v.raw }]))
+          });
 
         const results: Game['results'] = { ...withRaw.results };
 
@@ -508,6 +508,34 @@ export function computeBowlingOwed(results: Record<string, { raw: number | null 
       return [pid, (highest - r.raw) * 5];
     })
   );
+}
+
+/**
+ * Returns the cash payout (in cents) for a given finishing place.
+ * Bowling uses a different schedule from pool/darts:
+ *   Bowling: 1st=$10, 2nd=$15, 3rd=$5
+ *   Others:  1st=$15, 2nd=$10, 3rd=$5
+ * 4th and below receive $0.
+ */
+export function payoutForPlace(place: number | null, kind: 'bowling' | 'pool' | 'darts' | 'run'): number | null {
+  if (place == null) return null;
+  if (kind === 'bowling') {
+    if (place === 1) return 1000;
+    if (place === 2) return 1500;
+    if (place === 3) return 500;
+    return 0;
+  }
+  // pool, darts, run
+  if (place === 1) return 1500;
+  if (place === 2) return 1000;
+  if (place === 3) return 500;
+  return 0;
+}
+
+export function formatPayout(cents: number | null): string {
+  if (cents === null) return '-';
+  const dollars = cents / 100;
+  return `$${dollars.toFixed(0)}`;
 }
 
 export function emptyGameResult(): GameResult {
