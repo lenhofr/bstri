@@ -153,7 +153,7 @@ resource "aws_iam_role_policy_attachment" "scoring_lambda" {
 resource "aws_lambda_function" "scoring" {
   function_name = "${var.project_name}-scoring"
   role          = aws_iam_role.scoring_lambda.arn
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs24.x"
   handler       = "index.handler"
 
   filename         = data.archive_file.scoring_lambda_zip.output_path
